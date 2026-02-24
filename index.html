@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>राष्ट्रिय सतर्कता केन्द्र - उजुरी व्यवस्थापन</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Preahvihear&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS (Optional) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Nepali DatePicker CSS (LeafyCode) - सही नेपाली मितिको लागि (v5.1.0) -->
+    <!-- Nepali DatePicker CSS (LeafyCode v5.1.0) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nepali-date-picker@5.1.0/dist/nepali.datepicker.v5.1.0.min.css">
+<!-- External Libraries -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Add fallback CSS for Nepali DatePicker - यो नयाँ थप्ने -->
+<link rel="stylesheet" href="https://nepalidatepicker.sajanmaharjan.com.np/nepali.datepicker/css/nepali.datepicker.v4.0.1.min.css">
+<!-- Your custom styles -->
+<link rel="stylesheet" href="style.css">
+    <style>
+        /* Dark Mode Variables */
+        body.dark-mode {
+            --bg-color: #1a1a2e;
+            --text-color: #e0e0e0;
+            --card-bg: #16213e;
+            --sidebar-bg: #0f3460;
+            --border-color: #2a2a40;
+        }
+        body.dark-mode {
+            background-color: var(--bg-color) !important;
+            color: var(--text-color) !important;
+        }
+        body.dark-mode .card, 
+        body.dark-mode .module-card,
+        body.dark-mode .modal-content,
+        body.dark-mode .login-card {
+            background-color: var(--card-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        body.dark-mode .sidebar {
+            background-color: var(--sidebar-bg) !important;
+        }
+        body.dark-mode .form-control, 
+        body.dark-mode .form-select {
+            background-color: #252a41;
+            border-color: #444;
+            color: #fff;
+        }
+        body.dark-mode .table {
+            color: #e0e0e0;
+        }
+    </style>
+    <style>
+        /* Show similar complaints one-per-line, but keep each item unwrapped; allow horizontal scroll when needed */
+        #similarComplaintsBox .alert {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        #similarComplaintsBox .alert ul {
+            display: block;
+            padding-left: 0.85rem;
+            margin: 0;
+        }
+        #similarComplaintsBox .alert ul li {
+            display: block;
+            margin-bottom: 0.45rem;
+        }
+        /* Keep each link on a single line (no-wrap); long items will scroll horizontally inside the alert */
+        #similarComplaintsBox .alert a {
+            white-space: nowrap;
+            display: inline-block;
+        }
+    </style>
+    <style>
+        /* Dark Mode Variables */
+        body.dark-mode {
+            --bg-color: #1a1a2e;
+            --text-color: #e0e0e0;
+            --card-bg: #16213e;
+            --sidebar-bg: #0f3460;
+            --border-color: #2a2a40;
+        }
+        body.dark-mode {
+            background-color: var(--bg-color) !important;
+            color: var(--text-color) !important;
+        }
+        body.dark-mode .card, 
+        body.dark-mode .module-card,
+        body.dark-mode .modal-content,
+        body.dark-mode .login-card {
+            background-color: var(--card-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        body.dark-mode .sidebar {
+            background-color: var(--sidebar-bg) !important;
+        }
+        body.dark-mode .form-control, 
+        body.dark-mode .form-select {
+            background-color: #252a41;
+            border-color: #444;
+            color: #fff;
+        }
+        body.dark-mode .table {
+            color: #e0e0e0;
+        }
+    </style>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
+</head>
+<body>
+    <!-- Main Page -->
+    <div id="mainPage" class="page">
+        <header class="main-header d-flex align-center justify-between">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Emblem_of_Nepal.svg/100px-Emblem_of_Nepal.svg.png" 
+                     alt="नेपालको निशाना छाप" class="logo" />
+                <div>
+                    <h3 class="mb-1" style="color: var(--primary);">नेपाल सरकार<br>राष्ट्रिय सतर्कता केन्द्र</h3>
+                    <p class="text-muted text-small">उजुरी व्यवस्थापन प्रणाली</p>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-3">
+                <div class="text-right">
+                    <div id="currentDateTime" class="text-small" style="color: var(--gray-700);"></div>
+                    <div class="text-xs text-muted" id="currentNepaliDate"></div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- डेभलपमेन्ट टूल - पछि हटाउन सकिन्छ -->
+        <div style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
+        <button onclick="testDataLoad()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin-right: 5px;">
+            Test Load
+        </button>
+        <button onclick="checkState()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px;">
+            Check State
+        </button>
+        </div>
+            <div class="hero-section">
+                <h4 class="hero-title">उजुरी व्यवस्थापन प्रणालीमा स्वागत छ</h4>
+                <p class="hero-subtitle">
+                    राष्ट्रिय सतर्कता केन्द्रको एकीकृत उजुरी व्यवस्थापन प्रणाली
+                </p>
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalComplaintsMain">0</div>
+                        <div class="stat-label">कूल उजुरीहरू</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingComplaintsMain">0</div>
+                        <div class="stat-label">काम बाँकी</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="resolvedComplaintsMain">0</div>
+                        <div class="stat-label">फछ्रयौट भएका</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Admin Panel -->
+                <a href="#" class="module-card" onclick="openAdminLogin()">
+                    <div class="module-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <h3 class="module-title">एडमिन प्यानल</h3>
+                    <p class="module-description">
+                        सबै शाखाहरूको व्यवस्थापन, नियन्त्रण र विश्लेषण
+                    </p>
+                </a>
+
+                <!-- Complaint Management -->
+                <a href="#" class="module-card" onclick="openShakhaSelection()">
+                    <div class="module-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="module-title">उजुरी व्यवस्थापन</h3>
+                    <p class="module-description">
+                        नयाँ उजुरी दर्ता, सम्पादन र उजुरी ट्र्याकिङ <br> 
+                        शाखा अनुसारको उजुरी 
+                    </p>
+                </a>
+
+                <!-- Reports & Analytics -->
+                <a href="#" class="module-card" onclick="openReports()">
+                    <div class="module-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="module-title">रिपोर्ट र विश्लेषण</h3>
+                    <p class="module-description">
+                        विस्तृत रिपोर्ट <br> मूल्याङ्कन र Trend Analysis
+                    </p>
+                </a>
+
+                <!-- Settings -->
+                <a href="#" class="module-card" onclick="openSettings()">
+                    <div class="module-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3 class="module-title">सेटिङहरू</h3>
+                    <p class="module-description">
+                        सिस्टम कन्फिगरेसन, प्रयोगकर्ता व्यवस्थापन, 
+                        र कस्टमाइज्ड सेटिङहरू।
+                    </p>
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="page hidden">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-logo">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Emblem_of_Nepal.svg/100px-Emblem_of_Nepal.svg.png" 
+                         alt="नेपालको निशाना छाप" />
+                    <h2 class="login-title" id="loginPageTitle">लग-इन गर्नुहोस्</h2>
+                    <p class="login-subtitle" id="loginPageSubtitle">कृपया आफ्नो युजरनेम र पासवर्ड प्रविष्ट गर्नुहोस्</p>
+                </div>
+                
+                <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();">
+                    <div class="form-group">
+                        <label class="form-label" for="loginUsername">युजरनेम</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" id="loginUsername" class="form-control" placeholder="तपाईंको युजरनेम" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">पासवर्ड</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" id="loginPassword" class="form-control" placeholder="तपाईंको पासवर्ड" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="d-flex justify-between align-center">
+                            <div class="d-flex align-center gap-1">
+                                <input type="checkbox" id="rememberMe" />
+                                <label for="rememberMe" class="text-small">मलाई सम्झनुहोस्</label>
+                            </div>
+                            <a href="#" class="text-small text-primary" onclick="handleForgotPassword(event)">पासवर्ड बिर्सनुभयो?</a>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block" id="loginButton">
+                        <i class="fas fa-sign-in-alt"></i> लग-इन गर्नुहोस्
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                    <p class="text-xs text-muted">उजुरी व्यवस्थापन प्रणाली</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Layout -->
+    <div id="dashboardPage" class="hidden">
+        <div class="app-container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header d-flex align-center gap-2">
+                    <div class="user-avatar" id="userAvatar">NVC</div>
+                    <div>
+                        <div class="text-small" id="userName">प्रयोगकर्ता</div>
+                        <div class="text-xs opacity-80" id="userRole">शाखा</div>
+                    </div>
+                </div>
+                
+                <nav class="sidebar-nav" id="sidebarNav">
+                    <!-- Navigation items will be dynamically loaded -->
+                </nav>
+                
+                <div class="sidebar-footer p-2">
+                    <button class="btn btn-outline w-100" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="nav-text">लग आउट</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <header class="topbar">
+                    <div class="d-flex align-center gap-3">
+                        <div class="topbar-title" id="pageTitle">ड्यासबोर्ड</div>
+                        <div id="sheetActions" class="d-flex align-center gap-2"></div>
+                    </div>
+                    <div class="topbar-actions">
+                        <div class="notification-bell" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationCount"></span>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <!-- Notifications will be dynamically loaded -->
+                            </div>
+                        </div>
+                        <div class="user-menu" style="cursor: pointer;">
+                            <div class="user-avatar" id="topbarAvatar">U</div>
+                            <div class="user-info">
+                                <div class="text-small" id="topbarUserName">प्रयोगकर्ता</div>
+                                <div class="text-xs text-muted" id="topbarUserRole">शाखा</div>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                            <div class="user-dropdown" id="userDropdown">
+                                <div class="dropdown-item" id="logoutButton" style="cursor: pointer;">
+                                    <i class="fas fa-sign-out-alt"></i> लग आउट
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="content-area" id="contentArea">
+                    <!-- Content will be dynamically loaded -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="complaintModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">मोडल</h5>
+                <button class="action-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Shakha Selection Modal -->
+    <div id="shakhaModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h5 class="modal-title">शाखा चयन गर्नुहोस्</h5>
+                <button class="action-btn" onclick="closeShakhaModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="d-grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));">
+                    <!-- Shakha options will be dynamically loaded -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (Added) -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h5 class="modal-title">सेटिङहरू (Settings)</h5>
+                <button class="action-btn" onclick="closeSettingsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="event.preventDefault(); saveSettings();">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">प्रणाली सेटिङ (System Settings)</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()">
+                            <label class="form-check-label" for="darkModeSwitch">डार्क मोड (Dark Mode)</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">नोटिफिकेसन (Notifications)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="emailNotif" checked>
+                            <label class="form-check-label" for="emailNotif">इमेल नोटिफिकेसन</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="smsNotif">
+                            <label class="form-check-label" for="smsNotif">SMS नोटिफिकेसन</label>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">सेटिङ सेभ गर्नुहोस्</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Widget -->
+    <div class="chatbot-toggler" onclick="toggleChatbot()">
+        <i class="fas fa-robot"></i>
+    </div>
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chat-header">
+            <div class="d-flex align-center gap-2">
+                <i class="fas fa-robot"></i>
+                <div>
+                    <h6 class="mb-0">NVC AI सहायक</h6>
+                    <span class="text-xs opacity-80">अनलाइन</span>
+                </div>
+            </div>
+            <i class="fas fa-times pointer" onclick="toggleChatbot()"></i>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message chat-bot-msg">नमस्ते! म राष्ट्रिय सतर्कता केन्द्रको AI सहायक हुँ। म तपाईंलाई कसरी सहयोग गर्न सक्छु?</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" placeholder="यहाँ लेख्नुहोस्..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+<!-- Scripts (सही क्रममा) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Nepali DatePicker JS (v5.1.0) - मुख्य लाइब्रेरी -->
+<script src="https://cdn.jsdelivr.net/npm/nepali-date-picker@5.1.0/dist/nepali.datepicker.v5.1.0.min.js"></script>
+<!-- Add fallback Nepali DatePicker JS - यो नयाँ थप्ने -->
+<script src="https://nepalidatepicker.sajanmaharjan.com.np/nepali.datepicker/js/nepali.datepicker.v4.0.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> 
+
+<!-- यो नयाँ थप्ने: Nepali DatePicker default language नेपाली सेट गर्न -->
+<script>
+    // Nepali DatePicker को लागि पूर्व-सेटिङ
+    if (typeof $.fn.nepaliDatePicker !== 'undefined') {
+        $(document).ready(function() {
+            $.fn.nepaliDatePicker.setDefaults({
+                language: 'nepali',
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 10
+            });
+        });
+    }
+</script>
+
+<script src="script.js"></script>
+
+<script>
+    // Settings Functionality
+    function openSettings() {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Sync Dark Mode Switch
+            const darkModeSwitch = document.getElementById('darkModeSwitch');
+            if (darkModeSwitch) {
+                darkModeSwitch.checked = document.body.classList.contains('dark-mode');
+            }
+        }
+    }
+
+    function closeSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    function saveSettings() {
+        closeSettingsModal();
+        if (typeof Toastify === 'function') {
+            Toastify({
+                text: "सेटिङहरू सफलतापूर्वक सेभ भयो!",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: "#28a745" }
+            }).showToast();
+        } else {
+            alert("सेटिङहरू सफलतापूर्वक सेभ भयो!");
+        }
+    }
+</script>
+
+<script>
+    // साइडबारमा रहेको 'सेटिङहरू' लिङ्कले काम नगर्ने समस्याको समाधान
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebarNav = document.getElementById('sidebarNav');
+        if (sidebarNav) {
+            // Event delegation to handle clicks on dynamically loaded items
+            sidebarNav.addEventListener('click', (event) => {
+                const link = event.target.closest('a');
+                if (!link) return;
+
+                // Check if the clicked link is the 'Settings' link by its text content
+                const linkText = link.querySelector('.nav-text');
+                if (linkText && linkText.innerText.trim() === 'सेटिङहरू') {
+                    event.preventDefault();
+                    openSettings();
+                }
+            });
+        }
+    });
+</script>
+
+<!-- Fix for Action Buttons and Edit Logic (Added by AI) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // १. Action बटनहरूको लागि Event Delegation
+        // यसले फिल्टर वा रिलोड पछि पनि बटनहरूले काम गर्ने सुनिश्चित गर्छ
+        const contentArea = document.getElementById('contentArea');
+        
+        if (contentArea) {
+            contentArea.addEventListener('click', function(e) {
+                // Edit बटन क्लिक ह्यान्डल गर्ने
+                // बटनमा .btn-edit क्लास र data-id, data-json एट्रीब्युट हुनुपर्छ
+                const editBtn = e.target.closest('.btn-edit');
+                if (editBtn) {
+                    e.preventDefault();
+                    const id = editBtn.getAttribute('data-id');
+                    const rowData = editBtn.getAttribute('data-json'); // पूरा डाटा JSON स्ट्रिङको रूपमा
+                    
+                    if (id && typeof openEditModal === 'function') {
+                        openEditModal(id, rowData);
+                    } else {
+                        console.error("Error: ID missing or openEditModal function not found.");
+                        // यदि openEditModal छैन भने यहाँ फलब्याक लजिक लेख्न सकिन्छ
+                        // उदाहरण: populateForm(JSON.parse(rowData));
+                    }
+                }
+
+                // Delete बटन क्लिक ह्यान्डल गर्ने
+                const deleteBtn = e.target.closest('.btn-delete');
+                if (deleteBtn) {
+                    e.preventDefault();
+                    const id = deleteBtn.getAttribute('data-id');
+                    
+                    if (id && confirm('के तपाई यो उजुरी हटाउन चाहनुहुन्छ? यो कार्य फिर्ता लिन सकिँदैन।')) {
+                        if (typeof deleteComplaint === 'function') {
+                            deleteComplaint(id);
+                        } else {
+                            console.error("deleteComplaint function not found.");
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<!-- Fix for Action Buttons (Event Delegation Backup) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contentArea = document.getElementById('contentArea');
+        if (contentArea) {
+            contentArea.addEventListener('click', function(e) {
+                // Check if clicked element is inside an action button
+                const btn = e.target.closest('.action-btn');
+                if (btn && !btn.onclick) {
+                    // If button exists but has no inline handler, try to handle it here
+                    if (typeof handleTableActions === 'function') {
+                        handleTableActions(e);
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
