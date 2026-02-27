@@ -1,822 +1,5 @@
 
-    // ==================== ENHANCED NOTIFICATION SYSTEM ====================
-class NotificationSystem {
-    constructor() {
-        this.container = null;
-        this.toasts = new Map();
-        this.init();
-    }
-
-    init() {
-        // Create toast container if it doesn't exist
-        if (!document.querySelector('.toast-container')) {
-            this.container = document.createElement('div');
-            this.container.className = 'toast-container';
-            document.body.appendChild(this.container);
-        } else {
-            this.container = document.querySelector('.toast-container');
-        }
-    }
-
-    show(message, type = 'info', options = {}) {
-        const {
-            title = '',
-            duration = type === 'error' ? 0 : 5000,
-            closable = true,
-            persistent = false
-        } = options;
-
-        const id = `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.setAttribute('data-toast-id', id);
-
-        const icons = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-exclamation-circle',
-            warning: 'fas fa-exclamation-triangle',
-            info: 'fas fa-info-circle'
-        };
-
-        toast.innerHTML = `
-            <div class="toast-icon">
-                <i class="${icons[type] || icons.info}"></i>
-            </div>
-            <div class="toast-content">
-                ${title ? `<div class="toast-title">${title}</div>` : ''}
-                <div class="toast-message">${message}</div>
-            </div>
-            ${closable ? '<button class="toast-close" onclick="notificationSystem.hide(\'' + id + '\')"><i class="fas fa-times"></i></button>' : ''}
-            ${duration > 0 ? '<div class="toast-progress" style="animation-duration: ' + duration + 'ms"></div>' : ''}
-        `;
-
-        this.container.appendChild(toast);
-        this.toasts.set(id, toast);
-
-        // Trigger animation
-        setTimeout(() => toast.classList.add('show'), 10);
-
-        // Auto-hide if duration is set
-        if (duration > 0 && !persistent) {
-            setTimeout(() => this.hide(id), duration);
-        }
-
-        return id;
-    }
-
-    hide(id) {
-        const toast = this.toasts.get(id);
-        if (toast) {
-            toast.classList.add('hiding');
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-                this.toasts.delete(id);
-            }, 300);
-        }
-    }
-
-    clear() {
-        this.toasts.forEach((toast, id) => this.hide(id));
-    }
-
-    // Convenience methods
-    success(message, options = {}) {
-        return this.show(message, 'success', options);
-    }
-
-    error(message, options = {}) {
-        return this.show(message, 'error', { ...options, duration: 0 });
-    }
-
-    warning(message, options = {}) {
-        return this.show(message, 'warning', options);
-    }
-
-    info(message, options = {}) {
-        return this.show(message, 'info', options);
-    }
-}
-
-function setLastUpdatedLabel(date = null) {
-  const el = document.getElementById('lastUpdatedLabel');
-  if (!el) return;
-
-  if (!date) {
-    el.textContent = '';
-    return;
-  }
-
-  try {
-    const d = (date instanceof Date) ? date : new Date(date);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    el.textContent = `Last updated: ${hh}:${mm}`;
-  } catch (_) {
-    el.textContent = '';
-  }
-}
-
-async function liveRefreshTick() {
-  if (!state.currentUser) return;
-  if (state.currentPage !== 'dashboardPage') return;
-  if (document.hidden) return;
-  if (window._isLoadingData) return;
-
-  try {
-    const ok = await loadDataFromGoogleSheets(false);
-    if (ok) {
-      window._lastLiveRefreshAt = new Date();
-      setLastUpdatedLabel(window._lastLiveRefreshAt);
-    }
-  } catch (e) {
-    // silent: live refresh should not spam errors
-  }
-}
-
-function startLiveUpdates() {
-  if (window._liveRefreshInterval) clearInterval(window._liveRefreshInterval);
-  // 30s interval (tunable)
-  window._liveRefreshInterval = setInterval(liveRefreshTick, 30000);
-  // fire one quickly after dashboard load
-  setTimeout(liveRefreshTick, 1500);
-}
-
-function stopLiveUpdates() {
-  if (window._liveRefreshInterval) {
-    clearInterval(window._liveRefreshInterval);
-    window._liveRefreshInterval = null;
-  }
-}
-
-function openSidebar() {
-  document.body.classList.add('sidebar-open');
-}
-
-function closeSidebar() {
-  document.body.classList.remove('sidebar-open');
-}
-
-function toggleSidebar() {
-  if (document.body.classList.contains('sidebar-open')) closeSidebar();
-  else openSidebar();
-}
-
-function setupMobileNavigation() {
-  if (window._mobileNavSetup) return;
-  window._mobileNavSetup = true;
-
-  const menuBtn = document.getElementById('mobileMenuBtn');
-  const overlay = document.getElementById('sidebarOverlay');
-  const sidebar = document.querySelector('.sidebar');
-
-  if (menuBtn) {
-    menuBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      toggleSidebar();
-    });
-  }
-
-  if (overlay) {
-    overlay.addEventListener('click', function() {
-      closeSidebar();
-    });
-  }
-
-  // Close sidebar when a nav item is clicked (mobile UX)
-  const nav = document.getElementById('sidebarNav');
-  if (nav) {
-    nav.addEventListener('click', function(e) {
-      const link = e.target.closest('a.nav-item');
-      if (!link) return;
-      // only on small screens
-      if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
-        setTimeout(closeSidebar, 50);
-      }
-    });
-  }
-
-  // Swipe gestures
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchStartTime = 0;
-
-  document.addEventListener('touchstart', function(e) {
-    if (!e.touches || e.touches.length !== 1) return;
-    const t = e.touches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    touchStartTime = Date.now();
-  }, { passive: true });
-
-  document.addEventListener('touchend', function(e) {
-    if (!touchStartTime) return;
-    const dt = Date.now() - touchStartTime;
-    touchStartTime = 0;
-    if (!e.changedTouches || e.changedTouches.length !== 1) return;
-
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-
-    // ignore mostly-vertical gestures
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    // quick swipe threshold
-    if (dt > 600) return;
-
-    const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-    if (!isMobile) return;
-
-    // swipe right from left edge => open
-    if (dx > 70 && touchStartX < 40) {
-      openSidebar();
-    }
-
-    // swipe left anywhere (when sidebar open) => close
-    if (dx < -70 && document.body.classList.contains('sidebar-open')) {
-      // avoid closing if swipe started inside sidebar content and not intended
-      if (sidebar) {
-        const rect = sidebar.getBoundingClientRect();
-        if (touchStartX <= rect.right + 10) {
-          closeSidebar();
-        }
-      } else {
-        closeSidebar();
-      }
-    }
-  }, { passive: true });
-}
-
-// Global notification system instance
-const notificationSystem = new NotificationSystem();
-
-// ==================== LOADING STATES MANAGER ====================
-class LoadingManager {
-    constructor() {
-        this.activeLoadings = new Set();
-    }
-
-    showOverlay(message = 'लोड हुँदैछ...') {
-        const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div style="text-align: center;">
-                <div class="loading-spinner"></div>
-                <div style="margin-top: 1rem; color: var(--gray-600);">${message}</div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        this.activeLoadings.add(overlay);
-        return overlay;
-    }
-
-    hideOverlay(overlay) {
-        if (overlay && overlay.parentNode) {
-            overlay.parentNode.removeChild(overlay);
-            this.activeLoadings.delete(overlay);
-        }
-    }
-
-    setButtonLoading(button, loading = true) {
-        if (!button) return;
-        
-        if (loading) {
-            button.classList.add('btn-loading');
-            button.disabled = true;
-            button.dataset.originalText = button.innerHTML;
-        } else {
-            button.classList.remove('btn-loading');
-            button.disabled = false;
-            if (button.dataset.originalText) {
-                button.innerHTML = button.dataset.originalText;
-            }
-        }
-    }
-
-    showSkeletonLoader(container, type = 'card') {
-        const skeleton = document.createElement('div');
-        skeleton.className = 'skeleton-loader';
-        
-        if (type === 'table') {
-            skeleton.innerHTML = `
-                <div class="skeleton-table-row">
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                </div>
-                <div class="skeleton-table-row">
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                </div>
-                <div class="skeleton-table-row">
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                    <div class="skeleton-table-cell"></div>
-                </div>
-            `;
-        } else if (type === 'card') {
-            skeleton.innerHTML = `
-                <div class="skeleton-card">
-                    <div class="skeleton-text title"></div>
-                    <div class="skeleton-text"></div>
-                    <div class="skeleton-text"></div>
-                </div>
-            `;
-        } else {
-            skeleton.innerHTML = `
-                <div class="skeleton-text title"></div>
-                <div class="skeleton-text subtitle"></div>
-                <div class="skeleton-text"></div>
-                <div class="skeleton-text"></div>
-            `;
-        }
-        
-        if (container) {
-            container.innerHTML = '';
-            container.appendChild(skeleton);
-        }
-        
-        return skeleton;
-    }
-
-    hideAllOverlays() {
-        this.activeLoadings.forEach(overlay => this.hideOverlay(overlay));
-    }
-}
-
-// Global loading manager instance
-const loadingManager = new LoadingManager();
-
-// ==================== FORM VALIDATION SYSTEM ====================
-class FormValidator {
-    constructor(form) {
-        this.form = form;
-        this.rules = new Map();
-        this.errors = new Map();
-        this.init();
-    }
-
-    init() {
-        // Add real-time validation
-        this.form.addEventListener('input', (e) => this.validateField(e.target));
-        this.form.addEventListener('blur', (e) => this.validateField(e.target), true);
-    }
-
-    addRule(fieldName, rules) {
-        this.rules.set(fieldName, rules);
-        return this;
-    }
-
-    validateField(field) {
-        const fieldName = field.name || field.id;
-        const rules = this.rules.get(fieldName);
-        
-        if (!rules) return true;
-
-        const value = field.value.trim();
-        let isValid = true;
-        let errorMessage = '';
-
-        // Check each rule
-        for (const rule of rules) {
-            if (rule.required && !value) {
-                isValid = false;
-                errorMessage = rule.message || 'यो फिल्ड आवश्यक छ';
-                break;
-            }
-
-            if (rule.minLength && value.length < rule.minLength) {
-                isValid = false;
-                errorMessage = rule.message || `कम्तिमा ${rule.minLength} अक्षर आवश्यक`;
-                break;
-            }
-
-            if (rule.maxLength && value.length > rule.maxLength) {
-                isValid = false;
-                errorMessage = rule.message || `अधिकतम ${rule.maxLength} अक्षर`;
-                break;
-            }
-
-            if (rule.pattern && !rule.pattern.test(value)) {
-                isValid = false;
-                errorMessage = rule.message || 'अमान्य ढाँचा';
-                break;
-            }
-
-            if (rule.email && !this.isValidEmail(value)) {
-                isValid = false;
-                errorMessage = rule.message || 'अमान्य इमेल ठेगाना';
-                break;
-            }
-
-            if (rule.phone && !this.isValidPhone(value)) {
-                isValid = false;
-                errorMessage = rule.message || 'अमान्य फोन नम्बर';
-                break;
-            }
-
-            if (rule.custom && !rule.custom(value)) {
-                isValid = false;
-                errorMessage = rule.message || 'अमान्य मान';
-                break;
-            }
-        }
-
-        this.updateFieldUI(field, isValid, errorMessage);
-        return isValid;
-    }
-
-    updateFieldUI(field, isValid, errorMessage) {
-        // Remove previous states
-        field.classList.remove('is-valid', 'is-invalid');
-        
-        // Remove previous feedback
-        const existingFeedback = field.parentNode.querySelector('.invalid-feedback, .valid-feedback');
-        if (existingFeedback) {
-            existingFeedback.remove();
-        }
-
-        if (isValid) {
-            field.classList.add('is-valid');
-            
-            // Add success feedback if needed
-            if (field.value.trim()) {
-                const feedback = document.createElement('div');
-                feedback.className = 'valid-feedback';
-                feedback.textContent = '✓ मान्य';
-                field.parentNode.appendChild(feedback);
-            }
-        } else {
-            field.classList.add('is-invalid');
-            
-            // Add error feedback
-            const feedback = document.createElement('div');
-            feedback.className = 'invalid-feedback';
-            feedback.textContent = errorMessage;
-            field.parentNode.appendChild(feedback);
-        }
-    }
-
-    validateAll() {
-        let isValid = true;
-        const fields = this.form.querySelectorAll('input, select, textarea');
-        
-        fields.forEach(field => {
-            if (!this.validateField(field)) {
-                isValid = false;
-            }
-        });
-        
-        return isValid;
-    }
-
-    isValidEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    isValidPhone(phone) {
-        return /^[\d\s\-\+\(\)]+$/.test(phone) && phone.replace(/\D/g, '').length >= 7;
-    }
-
-    getErrors() {
-        const errors = {};
-        this.errors.forEach((message, field) => {
-            errors[field] = message;
-        });
-        return errors;
-    }
-}
-
-// ==================== KEYBOARD NAVIGATION SYSTEM ====================
-class KeyboardNavigation {
-    constructor() {
-        this.shortcuts = new Map();
-        this.hintVisible = false;
-        this.init();
-    }
-
-    init() {
-        document.addEventListener('keydown', (e) => this.handleKeyPress(e));
-        
-        // Add focusable class to interactive elements
-        this.addFocusableClasses();
-        
-        // Create keyboard hint
-        this.createKeyboardHint();
-    }
-
-    addShortcut(key, description, handler) {
-        this.shortcuts.set(key.toLowerCase(), { description, handler });
-        this.updateKeyboardHint();
-    }
-
-    handleKeyPress(e) {
-        // Skip if event is invalid
-        if (!e) return;
-        
-        const key = this.getKeyString(e);
-        
-        // Skip if no valid key string
-        if (!key) return;
-        
-        // Check for shortcuts
-        if (this.shortcuts.has(key)) {
-            e.preventDefault();
-            const shortcut = this.shortcuts.get(key);
-            shortcut.handler();
-        }
-
-        // Toggle keyboard hints with ? - only when not typing in input fields
-        if (key === '?' && !e.target.matches('input, textarea, select, [contenteditable]')) {
-            this.toggleHint();
-        }
-    }
-
-    getKeyString(e) {
-        const parts = [];
-        
-        if (e.ctrlKey || e.metaKey) parts.push('ctrl');
-        if (e.altKey) parts.push('alt');
-        if (e.shiftKey) parts.push('shift');
-        
-        // Handle different key properties for browser compatibility
-        let key = '';
-        if (e.key) {
-            key = e.key.toLowerCase();
-        } else if (e.which) {
-            key = String.fromCharCode(e.which).toLowerCase();
-        } else if (e.keyCode) {
-            key = String.fromCharCode(e.keyCode).toLowerCase();
-        }
-        
-        // Handle special keys
-        if (key === ' ') key = 'space';
-        if (key === 'escape') key = 'esc';
-        if (key === 'enter') key = 'enter';
-        
-        // Skip if no valid key found
-        if (!key) return '';
-        
-        parts.push(key);
-        
-        return parts.join('+');
-    }
-
-    addFocusableClasses() {
-        const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-        document.querySelectorAll(focusableElements).forEach(element => {
-            element.classList.add('focusable');
-        });
-    }
-
-    createKeyboardHint() {
-        const hint = document.createElement('div');
-        hint.className = 'keyboard-hint';
-        hint.innerHTML = `
-            <h4>किबोर्ड सर्टकटहरू</h4>
-            <div id="keyboardHintsList"></div>
-            <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">
-                "?" ले यो सूची देखाउँछ / लुकाउँछ
-            </div>
-        `;
-        document.body.appendChild(hint);
-        this.keyboardHint = hint;
-        this.updateKeyboardHint();
-    }
-
-    updateKeyboardHint() {
-        const hintsList = document.getElementById('keyboardHintsList');
-        if (!hintsList) return;
-
-        let html = '';
-        this.shortcuts.forEach((shortcut, key) => {
-            html += `
-                <div class="keyboard-hint-item">
-                    <span>${shortcut.description}</span>
-                    <span class="keyboard-key">${key}</span>
-                </div>
-            `;
-        });
-
-        hintsList.innerHTML = html;
-    }
-
-    toggleHint() {
-        this.hintVisible = !this.hintVisible;
-        if (this.keyboardHint) {
-            this.keyboardHint.classList.toggle('show', this.hintVisible);
-        }
-    }
-
-    showHint() {
-        this.hintVisible = true;
-        if (this.keyboardHint) {
-            this.keyboardHint.classList.add('show');
-        }
-    }
-
-    hideHint() {
-        this.hintVisible = false;
-        if (this.keyboardHint) {
-            this.keyboardHint.classList.remove('show');
-        }
-    }
-}
-
-// Global keyboard navigation instance
-const keyboardNavigation = new KeyboardNavigation();
-
-// ==================== EMPTY STATES MANAGER ====================
-class EmptyStateManager {
-    static show(container, options = {}) {
-        const {
-            type = 'default',
-            icon = 'fas fa-inbox',
-            title = 'कुनै डाटा छैन',
-            description = 'यहाँ कुनै डाटा उपलब्ध छैन।',
-            actionText = '',
-            actionHandler = null
-        } = options;
-
-        const emptyState = document.createElement('div');
-        emptyState.className = `empty-state empty-state-${type}`;
-        emptyState.innerHTML = `
-            <div class="empty-state-icon">
-                <i class="${icon}"></i>
-            </div>
-            <div class="empty-state-title">${title}</div>
-            <div class="empty-state-description">${description}</div>
-            ${actionText && actionHandler ? `
-                <div class="empty-state-action">
-                    <button class="btn btn-primary" onclick="${actionHandler}">
-                        <i class="fas fa-plus"></i>
-                        ${actionText}
-                    </button>
-                </div>
-            ` : ''}
-        `;
-
-        container.innerHTML = '';
-        container.appendChild(emptyState);
-        return emptyState;
-    }
-
-    static showTableEmpty(container, options = {}) {
-        return this.show(container, { 
-            ...options, 
-            type: 'table',
-            icon: 'fas fa-table',
-            title: 'कुनै रेकर्ड छैन',
-            description: 'तालिकामा कुनै रेकर्ड उपलब्ध छैन। नयाँ रेकर्ड थप्नुहोस्।'
-        });
-    }
-
-    static showSmallEmpty(container, options = {}) {
-        return this.show(container, { 
-            ...options, 
-            type: 'small',
-            icon: 'fas fa-minus-circle'
-        });
-    }
-}
-
-// ==================== INITIALIZATION AND INTEGRATION ====================
-
-// Initialize enhanced features when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEnhancedFeatures();
-    setupKeyboardShortcuts();
-    enhanceExistingForms();
-    replaceOldNotifications();
-});
-
-document.addEventListener('visibilitychange', function() {
-  try {
-    if (document.hidden) {
-      stopLiveUpdates();
-    } else {
-      // Only resume when dashboard is the active page
-      if (state && state.currentUser && state.currentPage === 'dashboardPage') {
-        startLiveUpdates();
-      }
-    }
-  } catch (_) {}
-});
-
-function initializeEnhancedFeatures() {
-    console.log('🚀 Initializing enhanced UI features...');
-    
-    // Add optional auto-loading states to buttons (opt-in)
-    // NOTE: Do NOT auto-disable all submit buttons on click; it can prevent form submit/onsubmit handlers.
-    document.querySelectorAll('button[data-auto-loading="true"]').forEach(button => {
-        button.addEventListener('click', function() {
-            if (!this.disabled && typeof loadingManager !== 'undefined') {
-                loadingManager.setButtonLoading(this, true);
-            }
-        });
-    });
-
-    // Add focus indicators to interactive elements
-    document.querySelectorAll('a, button, input, select, textarea').forEach(element => {
-        element.classList.add('focusable');
-    });
-
-    console.log('✅ Enhanced UI features initialized');
-}
-
-function setupKeyboardShortcuts() {
-    // Add common keyboard shortcuts
-    keyboardNavigation.addShortcut('ctrl+n', 'नयाँ उजुरी', () => {
-        if (typeof openComplaintModal === 'function') {
-            openComplaintModal();
-        }
-    });
-
-    keyboardNavigation.addShortcut('ctrl+s', 'बचत गर्नुहोस्', () => {
-        const activeForm = document.querySelector('form:not([style*="display: none"])');
-        if (activeForm) {
-            activeForm.dispatchEvent(new Event('submit'));
-        }
-    });
-
-    keyboardNavigation.addShortcut('ctrl+r', 'रिफ्रेस गर्नुहोस्', () => {
-        if (typeof loadData === 'function') {
-            loadData();
-        } else {
-            location.reload();
-        }
-    });
-
-    keyboardNavigation.addShortcut('escape', 'मोडल बन्द गर्नुहोस्', () => {
-        const openModals = document.querySelectorAll('.modal:not(.hidden)');
-        openModals.forEach(modal => {
-            modal.classList.add('hidden');
-        });
-    });
-
-    keyboardNavigation.addShortcut('ctrl+/', 'खोज', () => {
-        const searchInput = document.querySelector('input[type="search"], input[placeholder*="खोज"]');
-        if (searchInput) {
-            searchInput.focus();
-        }
-    });
-
-    console.log('⌨️ Keyboard shortcuts configured');
-}
-
-function enhanceExistingForms() {
-    // Enhance login form
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        const loginValidator = new FormValidator(loginForm);
-        loginValidator.addRule('loginUsername', [
-            { required: true, message: 'युजरनेम आवश्यक छ' },
-            { minLength: 3, message: 'कम्तिमा ३ अक्षर हुनुपर्छ' }
-        ]);
-        loginValidator.addRule('loginPassword', [
-            { required: true, message: 'पासवर्ड आवश्यक छ' },
-            { minLength: 4, message: 'कम्तिमा ४ अक्षर हुनुपर्छ' }
-        ]);
-
-        // Override form submission
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (loginValidator.validateAll()) {
-                handleLogin();
-            } else {
-                notificationSystem.error('कृपया सबै फिल्डहरू सही भर्नुहोस्');
-            }
-        });
-    }
-
-    console.log('📝 Forms enhanced with validation');
-}
-
-function replaceOldNotifications() {
-    // Override alert() with our notification system
-    window.alert = function(message) {
-        notificationSystem.info(message);
-    };
-
-    // Override console.log for errors to show notifications
-    const originalError = console.error;
-    console.error = function(...args) {
-        originalError.apply(console, args);
-        if (args[0] && typeof args[0] === 'string') {
-            notificationSystem.error(args[0]);
-        }
-    };
-
-    console.log('🔔 Notification system integrated');
-}
-
-// ==================== ENHANCED GOOGLE SHEETS INTEGRATION ====================
+    // ==================== GOOGLE SHEETS CONFIGURATION ====================
 const GOOGLE_SHEETS_CONFIG = {
   WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzCto7O7ffF-D-nHi_h3NNjEAjYPTn9TO1ruJjNZZNZdch_Aq0BLQpgAM-wYP_P9VYQ8g/exec',
   API_KEY: 'nvc2026secretkey',
@@ -851,21 +34,38 @@ const AI_SYSTEM = {
   },
 
   analyzeComplaint: function(description) {
-    if (!description) return { priority: 'साधारण', category: 'अन्य', classification: 'अन्य', summary: '' };
+    if (!description) return { priority: 'साधारण', category: 'अन्य', classification: 'अन्य', summary: '', sentiment: 'तटस्थ', entities: [] };
     
     let priority = 'साधारण';
     let category = 'अन्य';
     let classification = 'अन्य';
+    let score = 0;
     const text = description.toLowerCase();
     
-    // Priority Detection
-    if (this.keywords.high.some(k => text.includes(k))) {
-      priority = 'उच्च';
-    } else if (this.keywords.medium.some(k => text.includes(k))) {
-      priority = 'मध्यम';
+    // 1. Priority Scoring System
+    // High impact keywords (Weight: 3)
+    this.keywords.high.forEach(k => { if (text.includes(k)) score += 3; });
+    // Medium impact keywords (Weight: 1)
+    this.keywords.medium.forEach(k => { if (text.includes(k)) score += 1; });
+
+    // 2. Entity Extraction (Money/Amounts)
+    const entities = [];
+    // Regex for Nepali/English money formats (e.g., 10 लाख, ५० हजार, Rs 5000)
+    const moneyRegex = /([०-९\d]+(\.[०-९\d]+)?)\s*(लाख|करोड|हजार|सय|रुपैयाँ|रु|rs|npr|lakh|crore|thousand)/gi;
+    const moneyMatches = text.match(moneyRegex);
+    if (moneyMatches) {
+        moneyMatches.forEach(m => entities.push(m));
+        // If large amounts detected, increase score
+        if (text.includes('लाख') || text.includes('करोड') || text.includes('lakh') || text.includes('crore')) {
+            score += 2;
+        }
     }
 
-    // Classification Detection (New)
+    // Determine Priority based on Score
+    if (score >= 3) priority = 'उच्च';
+    else if (score >= 1) priority = 'मध्यम';
+
+    // 3. Classification Detection (Priority Order)
     if (this.keywords.corruption.some(k => text.includes(k))) classification = 'भ्रष्टाचार';
     else if (this.keywords.procurement.some(k => text.includes(k))) classification = 'सार्वजनिक खरिद/ठेक्का';
     else if (this.keywords.financial.some(k => text.includes(k))) classification = 'आर्थिक हिनामिना';
@@ -874,20 +74,61 @@ const AI_SYSTEM = {
     else if (this.keywords.conduct.some(k => text.includes(k))) classification = 'कर्मचारी आचरण';
     else if (this.keywords.policy.some(k => text.includes(k))) classification = 'नीति/निर्णय प्रक्रिया';
 
-    // Category Detection
+    // 4. Category Detection (Department mapping)
     if (this.keywords.technical.some(k => text.includes(k))) category = 'प्राविधिक';
     else if (this.keywords.admin.some(k => text.includes(k))) category = 'प्रशासन';
     else if (this.keywords.police.some(k => text.includes(k))) category = 'प्रहरी';
 
-    // Summary Generation (Simple extraction of first sentence or first 100 chars)
-    const sentences = description.split(/[।?!]/);
-    const summary = sentences[0] + (sentences.length > 1 ? '...' : '');
+    // 5. Sentiment Analysis
+    let sentiment = 'तटस्थ';
+    const negativeKeywords = ['दुःख', 'सास्ती', 'हैरान', 'रिस', 'खराब', 'ढिला', 'समस्या', 'bad', 'worst', 'problem', 'trouble', 'suffering'];
+    const urgentKeywords = ['तुरुन्त', 'अति', 'urgent', 'emergency', 'immediately'];
+    
+    if (urgentKeywords.some(k => text.includes(k))) sentiment = 'अत्यावश्यक (Urgent)';
+    else if (negativeKeywords.some(k => text.includes(k))) sentiment = 'नकारात्मक (Negative)';
 
-    return { priority, category, classification, summary };
+    // 6. Summary Generation
+    const cleanText = description.replace(/\s+/g, ' ').trim();
+    // Split by common sentence terminators (Nepali & English)
+    const sentences = cleanText.split(/[।?!.]/);
+    let summary = sentences[0].trim();
+    if (summary.length > 80) summary = summary.substring(0, 77) + '...';
+    else if (sentences.length > 1 && sentences[1].trim()) summary += '...';
+
+    return { priority, category, classification, summary, sentiment, entities, score };
   },
 
   getChatResponse: function(input) {
     input = input.toLowerCase();
+    const complaints = state.complaints || [];
+    const projects = state.projects || [];
+    const now = Date.now();
+
+    // १. सन्दर्भ व्यवस्थापन: पुरानो सन्दर्भ हटाउने (e.g., २ मिनेट भन्दा पुरानो)
+    if (state.chatContext && (now - state.chatContext.timestamp > 120000)) {
+        console.log('Chat context expired.');
+        state.chatContext = null;
+    }
+
+    // २. सन्दर्भ अनुसारको प्रश्न (Follow-up Questions)
+    if (state.chatContext) {
+        const followUpKeywords = ['tell me more', 'details', 'more', 'विवरण', 'थप', 'अझै', 'tell me about it', 'what about it', 'and', 'ani', 'अनि'];
+        const isFollowUp = followUpKeywords.some(k => input.includes(k));
+
+        if (isFollowUp && state.chatContext.topic === 'complaint_status' && state.chatContext.lastComplaintId) {
+            const complaint = complaints.find(c => String(c.id) === String(state.chatContext.lastComplaintId));
+            if (complaint) {
+                const fullDetails = `
+                    <strong>विस्तृत विवरण (उजुरी नं: ${complaint.id}):</strong><br>
+                    <strong>उजुरकर्ता:</strong> ${complaint.complainant}<br>
+                    <strong>विवरण:</strong> ${complaint.description || '-'}<br>
+                    <strong>कैफियत:</strong> ${complaint.remarks || '-'}<br>
+                `;
+                state.chatContext = null; // विवरण दिएपछि सन्दर्भ रिसेट गर्ने
+                return fullDetails;
+            }
+        }
+    }
     
     // 0. Empty check
     if (!input.trim()) return 'कृपया केही लेख्नुहोस्।';
@@ -924,31 +165,31 @@ const AI_SYSTEM = {
     // 4. तथ्याङ्क (Stats)
     // Pending
     if (input.match(/(कति|how many|count|kati)/) && input.match(/(बाँकी|pending|remaining|banki)/)) {
-      const pending = (state.complaints || []).filter(c => c.status === 'pending').length;
+      const pending = complaints.filter(c => c.status === 'pending').length;
       return `हाल प्रणालीमा <strong>${pending}</strong> वटा उजुरी फछ्रयौट हुन बाँकी छन्।`;
     }
     
     // Resolved
     if (input.match(/(फछ्रयौट|resolved|सकिएको|completed|done|farchyout|sakiyo)/)) {
-        const resolved = (state.complaints || []).filter(c => c.status === 'resolved').length;
+        const resolved = complaints.filter(c => c.status === 'resolved').length;
         return `हालसम्म <strong>${resolved}</strong> वटा उजुरी फछ्रयौट भइसकेका छन्।`;
     }
 
     // Progress
     if (input.match(/(चालु|progress|running|process|chalu)/)) {
-        const progress = (state.complaints || []).filter(c => c.status === 'progress').length;
+        const progress = complaints.filter(c => c.status === 'progress').length;
         return `हाल <strong>${progress}</strong> वटा उजुरी कारबाहीको प्रक्रियामा (चालु) छन्।`;
     }
 
     // Total
     if (input.match(/(कुल|total|जम्मा|all|sum)/) && (input.match(/(उजुरी|complaint|case)/) || !input.match(/(project|ayojana|anugaman)/))) {
-      return `प्रणालीमा जम्मा <strong>${(state.complaints || []).length}</strong> वटा उजुरी दर्ता भएका छन्।`;
+      return `प्रणालीमा जम्मा <strong>${complaints.length}</strong> वटा उजुरी दर्ता भएका छन्।`;
     }
 
     // 5. तथ्याङ्क - आयोजना / प्राविधिक (Projects Stats)
     if (input.match(/(project|ayojana|nirman|technical|prabidhik|आयोजना|निर्माण|प्राविधिक)/)) {
-        const total = (state.projects || []).length;
-        const active = (state.projects || []).filter(p => p.status === 'active').length;
+        const total = projects.length;
+        const active = projects.filter(p => p.status === 'active').length;
         return `प्राविधिक परीक्षण महाशाखा अन्तर्गत <strong>${total}</strong> वटा आयोजना अनुगमन प्राविधिक/परीक्षण दर्ता छन्।<br>जसमध्ये <strong>${active}</strong> वटा चालु (Active) छन्।`;
     }
     
@@ -1007,7 +248,7 @@ const AI_SYSTEM = {
              searchId = idMatch[0];
         }
 
-        const complaint = (state.complaints || []).find(c => 
+        const complaint = complaints.find(c => 
             String(c.id).toUpperCase().includes(searchId) || 
             String(c.complaintId || '').toUpperCase().includes(searchId) ||
             (input.match(/\d{4}/) && String(c.id).includes(input.match(/\d{4}/)[0]))
@@ -1020,12 +261,21 @@ const AI_SYSTEM = {
             else if (complaint.status === 'progress') { statusText = 'कार्यान्वयनको चरणमा (चालु)'; statusIcon = '⏳'; }
             else { statusText = 'हेर्न बाँकी (Pending)'; statusIcon = '🕒'; }
             
+            // SET CONTEXT for follow-up questions
+            state.chatContext = {
+                topic: 'complaint_status',
+                lastComplaintId: complaint.id,
+                timestamp: now
+            };
+
             return `
             <strong>उजुरी विवरण फेला पर्यो:</strong><br>
             🆔 नं: ${complaint.id}<br>
             📅 मिति: ${complaint.date}<br>
+            👤 उजुरकर्ता: ${complaint.complainant}<br>
             ${statusIcon} अवस्था: ${statusText}<br>
             📝 विषय: ${complaint.description ? complaint.description.substring(0, 40) + '...' : '-'}
+            <br><button class="btn btn-sm btn-outline-primary mt-1" onclick="viewComplaint('${complaint.id}')">विवरण हेर्नुहोस्</button>
             `;
         } else {
              if (searchId.includes('NVC') || searchId.length >= 4) {
@@ -1034,12 +284,57 @@ const AI_SYSTEM = {
         }
     }
 
-    // 13. शाखा जानकारी (Shakha Info)
+    // 13. Keyword Search (Content Search) - Data Driven
+    if (input.match(/(search|khoj|find|खोज|हेर्नु|about|regarding|विषय|बारेमा)/)) {
+        const stopWords = ['search', 'khoj', 'find', 'खोज', 'हेर्नु', 'about', 'regarding', 'विषय', 'complaint', 'ujuri', 'ko', 'ma', 'for', 'please', 'kripaya', 'gari', 'dinuhos', 'बारेमा'];
+        const words = input.split(/\s+/).filter(w => !stopWords.includes(w) && w.length > 2);
+        
+        if (words.length > 0) {
+            const keyword = words[0];
+            const found = complaints.filter(c => 
+                (c.description || '').toLowerCase().includes(keyword) || 
+                (c.complainant || '').toLowerCase().includes(keyword) ||
+                (c.accused || '').toLowerCase().includes(keyword)
+            );
+            
+            if (found.length > 0) {
+                let resp = `<strong>"${keyword}"</strong> सँग सम्बन्धित ${found.length} वटा उजुरी भेटिए:<br>`;
+                found.slice(0, 3).forEach(c => {
+                    resp += `• <a href="#" onclick="viewComplaint('${c.id}')">${c.id}</a>: ${c.description.substring(0, 20)}...<br>`;
+                });
+                if (found.length > 3) resp += `...र अन्य ${found.length - 3} वटा।`;
+
+                // SET CONTEXT
+                state.chatContext = {
+                    topic: 'keyword_search',
+                    lastKeyword: keyword,
+                    timestamp: now
+                };
+                return resp;
+            }
+        }
+    }
+
+    // 14. शाखा जानकारी (Shakha Info)
     if (input.match(/(shakha|branch|division|शाखा|महाशाखा)/)) {
+        // Check for specific branch stats
+        for (const [key, val] of Object.entries(SHAKHA)) {
+            if (input.includes(val.toLowerCase()) || input.includes(key.toLowerCase())) {
+                const count = complaints.filter(c => c.shakha === val || c.shakha === key).length;
+                
+                // SET CONTEXT
+                state.chatContext = {
+                    topic: 'shakha_info',
+                    lastShakha: val,
+                    timestamp: now
+                };
+                return `<strong>${val}</strong> मा हाल कुल <strong>${count}</strong> उजुरी छन्।`;
+            }
+        }
         return 'सतर्कता केन्द्रमा प्रशासन, प्रहरी, प्राविधिक र नीति निर्माण गरी ४ महाशाखाहरू र विभिन्न शाखाहरू छन्। तपाईं कुन शाखाको बारेमा जान्न चाहनुहुन्छ?';
     }
 
-    // 14. Page Content / Keywords Matching (Dynamic)
+    // 15. Page Content / Keywords Matching (Dynamic)
     // Check against SHAKHA
     for (const [key, value] of Object.entries(SHAKHA)) {
         if (input.includes(value.toLowerCase()) || input.includes(key.replace(/_/g, ' '))) {
@@ -1065,14 +360,13 @@ const AI_SYSTEM = {
         return 'सेटिङ मेनुबाट तपाईंले आफ्नो प्रोफाइल, पासवर्ड र प्रणालीको अन्य प्राथमिकताहरू परिवर्तन गर्न सक्नुहुन्छ।';
     }
 
-    // 15. Fallback Context Matching (Webpage words)
+    // 16. Fallback Context Matching (Webpage words)
     if (input.match(/(admin|planning|yojana|police|prahari|technical|prabidhik|policy|niti|kanun|legal|arthik|finance)/)) {
         return `तपाईंले "${input}" सँग सम्बन्धित जानकारी खोज्नुभएको जस्तो छ। कृपया सम्बन्धित शाखाको ड्यासबोर्डमा जानुहोस् वा विशिष्ट प्रश्न सोध्नुहोस्।`;
     }
 
     // Default Response (Randomized)
     const defaults = [
-        'माफ गर्नुहोला, हाम्रो कार्यालयमा सनरुफ भएको गाडी छैन। त्यसैलै सचिवज्यूको लागि एउटा फर्चुनर गाडी खोज्दै छौं।',
         'माफ गर्नुहोला, मैले बुझिन। कृपया अलि स्पष्टसँग सोध्नुहोस्।',
         'मैले प्रश्न बुझ्न सकिन। तपाईं "help" टाइप गरेर उदाहरण हेर्न सक्नुहुन्छ।',
         'क्षमा पाउँ, म अझै सिक्दै छु। तपाईंले उजुरी, आयोजना वा सम्पर्कबारे सोध्न सक्नुहुन्छ।',
@@ -1351,7 +645,8 @@ const state = {
   },
   useLocalData: false,
   previousNotificationIds: null,
-  notificationFilter: 'all'
+  notificationFilter: 'all',
+  chatContext: null // च्याटको सन्दर्भ (context) राख्न
 };
 
 // ==================== GLOBAL CHART STORAGE ====================
@@ -1594,6 +889,11 @@ function getCurrentNepaliDate() {
     // यो सन् २०२५ मा २०८१ चैत देखि २०८२ बैशाख सम्म
     console.warn('⚠️ Using fallback Nepali date calculation');
     return getFallbackNepaliDate();
+    
+    // Fix: Return ISO format (YYYY-MM-DD) for form values and validation
+    const today = new Date();
+    const adDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return convertADtoBS(adDateStr) || "2082-11-14";
 }
 
 // Helper: Convert Devanagari digits to Latin digits
@@ -2501,282 +1801,17 @@ function destroyAllCharts() {
 
 const initializeNepaliDatePickers = initializeDatepickers;
 
-// ==================== EXAMPLE USAGE FUNCTIONS ====================
-
-// Example: Enhanced data loading with skeleton loader
-async function loadComplaintsWithEnhancements() {
-    const contentArea = document.getElementById('contentArea');
-    if (!contentArea) return;
-
-    try {
-        // Show skeleton loader
-        loadingManager.showSkeletonLoader(contentArea, 'table');
-        
-        // Load data
-        const response = await getFromGoogleSheets('getComplaints');
-        
-        if (response.success && response.data.length > 0) {
-            renderComplaintsTable(response.data);
-            notificationSystem.success(`${response.data.length} उजुरीहरू लोड भयो`);
-        } else {
-            // Show empty state
-            EmptyStateManager.showTableEmpty(contentArea, {
-                actionText: 'नयाँ उजुरी थप्नुहोस्',
-                actionHandler: 'openComplaintModal()'
-            });
-        }
-    } catch (error) {
-        console.error('Error loading complaints:', error);
-        notificationSystem.error('उजुरीहरू लोड गर्ने क्रममा त्रुटि');
-        
-        // Show error empty state
-        EmptyStateManager.show(contentArea, {
-            icon: 'fas fa-exclamation-triangle',
-            title: 'लोडिङ त्रुटि',
-            description: 'डाटा लोड गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।',
-            actionText: 'पुन: प्रयास गर्नुहोस्',
-            actionHandler: 'loadComplaintsWithEnhancements()'
-        });
-    }
-}
-
-// Example: Enhanced form submission
-function setupComplaintForm() {
-    const complaintForm = document.getElementById('complaintForm');
-    if (!complaintForm) return;
-
-    // Create validator
-    const validator = new FormValidator(complaintForm);
-    
-    // Add validation rules
-    validator.addRule('complaintTitle', [
-        { required: true, message: 'उजुरीको शीर्षक आवश्यक छ' },
-        { minLength: 5, message: 'कम्तिमा ५ अक्षर हुनुपर्छ' },
-        { maxLength: 200, message: 'अधिकतम २०० अक्षर' }
-    ]);
-
-    validator.addRule('complaintDescription', [
-        { required: true, message: 'उजुरीको विवरण आवश्यक छ' },
-        { minLength: 20, message: 'कम्तिमा २० अक्षर हुनुपर्छ' },
-        { maxLength: 2000, message: 'अधिकतम २००० अक्षर' }
-    ]);
-
-    validator.addRule('complainantName', [
-        { required: true, message: 'नाम आवश्यक छ' },
-        { minLength: 3, message: 'कम्तिमा ३ अक्षर हुनुपर्छ' }
-    ]);
-
-    validator.addRule('complainantPhone', [
-        { required: true, message: 'फोन नम्बर आवश्यक छ' },
-        { phone: true, message: 'अमान्य फोन नम्बर (कम्तिमा ७ अंक)' }
-    ]);
-
-    validator.addRule('complainantEmail', [
-        { email: true, message: 'अमान्य इमेल ठेगाना' }
-    ]);
-
-    // Handle form submission
-    complaintForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        // Validate all fields
-        if (!validator.validateAll()) {
-            notificationSystem.error('कृपया सबै आवश्यक फिल्डहरू सही भर्नुहोस्');
-            return;
-        }
-
-        // Get submit button and show loading
-        const submitBtn = this.querySelector('button[type="submit"]');
-        loadingManager.setButtonLoading(submitBtn, true);
-
-        try {
-            // Collect form data
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-
-            // Submit to Google Sheets
-            const response = await getFromGoogleSheets('submitComplaint', data);
-
-            if (response.success) {
-                notificationSystem.success('उजुरी सफलतापूर्वक दर्ता गरियो!', {
-                    title: 'सफलता',
-                    duration: 5000
-                });
-                
-                // Reset form
-                this.reset();
-                this.querySelectorAll('.is-valid, .is-invalid').forEach(field => {
-                    field.classList.remove('is-valid', 'is-invalid');
-                });
-                
-                // Reload complaints list
-                if (typeof loadComplaintsWithEnhancements === 'function') {
-                    loadComplaintsWithEnhancements();
-                }
-                
-                // Close modal
-                const modal = this.closest('.modal');
-                if (modal) {
-                    modal.classList.add('hidden');
-                }
-            } else {
-                notificationSystem.error(response.message || 'उजुरी दर्ता गर्न सकिएन');
-            }
-        } catch (error) {
-            console.error('Submit error:', error);
-            notificationSystem.error('पेश गर्दा त्रुटि भयो - कृपया फेरि प्रयास गर्नुहोस्');
-        } finally {
-            // Reset button state
-            loadingManager.setButtonLoading(submitBtn, false);
-        }
-    });
-}
-
-// Example: Enhanced search functionality
-function setupEnhancedSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (!searchInput) return;
-
-    let searchTimeout;
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value.trim();
-        
-        if (query.length < 2) {
-            // Show hint for short queries
-            if (query.length > 0) {
-                notificationSystem.info('कम्तिमा २ अक्षर टाइप गर्नुहोस्', {
-                    duration: 3000
-                });
-            }
-            return;
-        }
-
-        // Show loading indicator
-        const searchBtn = document.getElementById('searchBtn');
-        if (searchBtn) {
-            loadingManager.setButtonLoading(searchBtn, true);
-        }
-
-        // Debounced search
-        searchTimeout = setTimeout(async () => {
-            try {
-                const response = await getFromGoogleSheets('searchComplaints', { query });
-                
-                if (response.success) {
-                    renderSearchResults(response.data);
-                    notificationSystem.success(`${response.data.length} परिणामहरू फेला परे`);
-                } else {
-                    EmptyStateManager.show(document.getElementById('searchResults'), {
-                        icon: 'fas fa-search',
-                        title: 'कुनै परिणाम छैन',
-                        description: `"${query}" को लागि कुनै परिणाम फेला परेन।`
-                    });
-                }
-            } catch (error) {
-                console.error('Search error:', error);
-                notificationSystem.error('खोजी गर्दा त्रुटि भयो');
-            } finally {
-                if (searchBtn) {
-                    loadingManager.setButtonLoading(searchBtn, false);
-                }
-            }
-        }, 500);
-    });
-}
-
-// Example: Dashboard with enhanced stats
-async function loadEnhancedDashboard() {
-    const contentArea = document.getElementById('contentArea');
-    if (!contentArea) return;
-
-    try {
-        // Show skeleton loaders for stats
-        contentArea.innerHTML = `
-            <div class="stats-grid">
-                <div class="skeleton-loader">
-                    <div class="skeleton-text title"></div>
-                    <div class="skeleton-text"></div>
-                </div>
-                <div class="skeleton-loader">
-                    <div class="skeleton-text title"></div>
-                    <div class="skeleton-text"></div>
-                </div>
-                <div class="skeleton-loader">
-                    <div class="skeleton-text title"></div>
-                    <div class="skeleton-text"></div>
-                </div>
-                <div class="skeleton-loader">
-                    <div class="skeleton-text title"></div>
-                    <div class="skeleton-text"></div>
-                </div>
-            </div>
-        `;
-
-        // Load dashboard data
-        const response = await getFromGoogleSheets('getDashboardStats');
-        
-        if (response.success) {
-            renderEnhancedDashboard(response.data);
-            notificationSystem.success('ड्यासबोर्ड अपडेट भयो');
-        } else {
-            throw new Error(response.message);
-        }
-    } catch (error) {
-        console.error('Dashboard error:', error);
-        notificationSystem.error('ड्यासबोर्ड लोड गर्न सकिएन');
-        
-        // Show error state
-        EmptyStateManager.show(contentArea, {
-            icon: 'fas fa-chart-line',
-            title: 'ड्यासबोर्ड लोड गर्न सकिएन',
-            description: 'तथ्याङ्क लोड गर्ने क्रममा समस्या भयो। कृपया पेज रिफ्रेस गर्नुहोस्।',
-            actionText: 'रिफ्रेस गर्नुहोस्',
-            actionHandler: 'loadEnhancedDashboard()'
-        });
-    }
-}
-
-// Initialize enhanced features when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Setup enhanced forms
-    setTimeout(() => {
-        setupComplaintForm();
-        setupEnhancedSearch();
-    }, 1000);
-    
-    // Show welcome notification
-    setTimeout(() => {
-        notificationSystem.success('स्वागत छ! उन्नत सुविधाहरू सक्रिय छन्।', {
-            title: 'प्रणाली अपडेट',
-            duration: 4000
-        });
-    }, 2000);
-});
-
 // ==================== GOOGLE SHEETS API FUNCTIONS ====================
 async function getFromGoogleSheets(action, params = {}) {
-  // Show loading state for long operations
-  let loadingOverlay = null;
-  const isLongOperation = ['getData', 'getComplaints', 'getReports'].includes(action);
-  
-  if (isLongOperation) {
-    loadingOverlay = loadingManager.showOverlay('डाटा लोड हुँदैछ...');
-  }
-
   // Sheets disabled छ भने
   if (!GOOGLE_SHEETS_CONFIG.ENABLED) {
     console.log('ℹ️ Google Sheets disabled');
-    if (loadingOverlay) loadingManager.hideOverlay(loadingOverlay);
     return { success: false, data: [], message: 'Integration disabled' };
   }
   
   // API Key check
   if (!GOOGLE_SHEETS_CONFIG.API_KEY) {
     console.error('❌ API Key is missing');
-    if (loadingOverlay) loadingManager.hideOverlay(loadingOverlay);
-    notificationSystem.error('API Key मिसिङ छ - कृपया कन्फिगरेसन जाँच गर्नुहोस्');
     return { success: false, data: [], message: 'API Key is missing' };
   }
   
@@ -2784,8 +1819,6 @@ async function getFromGoogleSheets(action, params = {}) {
   if (!GOOGLE_SHEETS_CONFIG.WEB_APP_URL || 
       GOOGLE_SHEETS_CONFIG.WEB_APP_URL.includes('script.google.com/macros/s/') === false) {
     console.error('❌ Invalid Web App URL');
-    if (loadingOverlay) loadingManager.hideOverlay(loadingOverlay);
-    notificationSystem.error('अमान्य Web App URL');
     return { success: false, data: [], message: 'Invalid Web App URL' };
   }
   
@@ -2826,8 +1859,6 @@ async function getFromGoogleSheets(action, params = {}) {
           if (retryCount < (GOOGLE_SHEETS_CONFIG.MAX_RETRIES || 3)) {
             retryCount++;
             console.log(`🔄 Retry ${retryCount}/${GOOGLE_SHEETS_CONFIG.MAX_RETRIES} for ${action}`);
-            notificationSystem.warning(`पुन: प्रयास गर्दै ${retryCount}/${GOOGLE_SHEETS_CONFIG.MAX_RETRIES}`);
-            
             setTimeout(() => {
               // नयाँ callback name बनाउने
               const newCallback = `${callbackName}_retry${retryCount}`;
@@ -2838,8 +1869,6 @@ async function getFromGoogleSheets(action, params = {}) {
               document.head.appendChild(script);
             }, GOOGLE_SHEETS_CONFIG.RETRY_DELAY * retryCount);
           } else {
-            if (loadingOverlay) loadingManager.hideOverlay(loadingOverlay);
-            notificationSystem.error('सर्भरमा जडान गर्न सकिएन - कृपया पछि फेरि प्रयास गर्नुहोस्');
             resolve({ 
               success: false, 
               data: [], 
@@ -2870,9 +1899,6 @@ async function getFromGoogleSheets(action, params = {}) {
         cleanup();
         
         console.log(`📨 JSONP Response [${action}] received`, response ? '✅' : '❌');
-        
-        // Hide loading overlay
-        if (loadingOverlay) loadingManager.hideOverlay(loadingOverlay);
         
         // 🔥 CRITICAL: Apps Script बाट आउने विभिन्न response formats ह्यान्डल गर्ने
         let formattedResponse = response || { success: false, data: [] };
@@ -4729,66 +3755,13 @@ function showPage(pageId) {
 }
 
 function showDashboardPage() {
-  console.log('📊 showDashboardPage called');
-  
   if (!state.currentUser) {
-    console.log('❌ No current user, showing login page');
-    if (typeof notificationSystem !== 'undefined') {
-      notificationSystem.error('पहिले लगइन गर्नुहोस्', {
-        title: 'प्रमाणीकरण आवश्यक'
-      });
-    } else {
-      alert('पहिले लगइन गर्नुहोस्');
-    }
     showPage('loginPage');
     return;
   }
-  
-  console.log('✅ Current user found:', state.currentUser);
-  
-  // Show loading overlay while dashboard loads
-  let loadingOverlay = null;
-  if (typeof loadingManager !== 'undefined') {
-    loadingOverlay = loadingManager.showOverlay('ड्यासबोर्ड लोड हुँदैछ...');
-  }
-  
-  try {
-    console.log('🔄 Updating user info and loading dashboard data...');
-    updateUserInfo();
-    loadDashboardData();
-    
-    // Show dashboard page
-    console.log('📄 Showing dashboard page...');
-    showPage('dashboardPage');
-
-    try { setupMobileNavigation(); } catch (_) {}
-    try { startLiveUpdates(); } catch (_) {}
-    
-    // Hide loading after a short delay to ensure everything is loaded
-    setTimeout(() => {
-      if (loadingOverlay && typeof loadingManager !== 'undefined') {
-        loadingManager.hideOverlay(loadingOverlay);
-      }
-      if (typeof notificationSystem !== 'undefined') {
-        notificationSystem.success('ड्यासबोर्ड सफलतापूर्वक लोड भयो', {
-          duration: 2000
-        });
-      }
-    }, 500);
-    
-  } catch (error) {
-    console.error('❌ Dashboard loading error:', error);
-    if (loadingOverlay && typeof loadingManager !== 'undefined') {
-      loadingManager.hideOverlay(loadingOverlay);
-    }
-    if (typeof notificationSystem !== 'undefined') {
-      notificationSystem.error('ड्यासबोर्ड लोड गर्न सकिएन', {
-        title: 'त्रुटि'
-      });
-    } else {
-      alert('ड्यासबोर्ड लोड गर्न सकिएन');
-    }
-  }
+  updateUserInfo();
+  loadDashboardData();
+  showPage('dashboardPage');
 }
 
 function togglePasswordVisibility(fieldId) {
@@ -4801,137 +3774,59 @@ function togglePasswordVisibility(fieldId) {
 }
 
 function handleLogin() {
-  console.log('🔐 Login function called');
-  
-  // Prevent multiple login attempts
-  if (window._isLoggingIn) {
-    console.log('⚠️ Login already in progress');
-    return;
-  }
-  window._isLoggingIn = true;
-  
   const username = document.getElementById('loginUsername').value;
   const password = document.getElementById('loginPassword').value;
   
-  console.log('📝 Credentials:', { username: username, passwordLength: password.length });
-  
   if (!username || !password) {
-    console.log('⚠️ Missing credentials');
-    window._isLoggingIn = false;
-    if (typeof notificationSystem !== 'undefined') {
-      notificationSystem.warning('कृपया युजरनेम र पासवर्ड प्रविष्ट गर्नुहोस्');
-    } else {
-      alert('कृपया युजरनेम र पासवर्ड प्रविष्ट गर्नुहोस्');
-    }
+    showToast('कृपया युजरनेम र पासवर्ड प्रविष्ट गर्नुहोस्', 'warning');
     return;
   }
   
   const loginBtn = document.getElementById('loginButton');
   const originalText = loginBtn.innerHTML;
+  loginBtn.innerHTML = '<div class="spinner"></div>';
+  loginBtn.disabled = true;
   
-  console.log('🔄 Starting login process...');
-  
-  // Use enhanced loading state
-  if (typeof loadingManager !== 'undefined') {
-    loadingManager.setButtonLoading(loginBtn, true);
-  } else {
-    loginBtn.innerHTML = '<div class="spinner"></div>';
-    loginBtn.disabled = true;
-  }
-  
-  // Clear any existing timeout
-  if (window._loginTimeout) {
-    clearTimeout(window._loginTimeout);
-  }
-  
-  window._loginTimeout = setTimeout(() => {
-    console.log('🔍 Checking credentials...');
-    
-    try {
-      if (username === 'admin' && password === 'nvc123') {
-        console.log('✅ Admin login successful');
+  setTimeout(() => {
+    if (username === 'admin' && password === 'nvc123') {
+      state.currentUser = {
+        id: 'admin', name: 'एडमिन', role: 'admin',
+        avatar: 'A', shakha: null,
+        mahashakha: null, permissions: ['all']
+      };
+      
+      const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
+      localStorage.setItem('nvc_session', JSON.stringify(session));
+      
+      showDashboardPage();
+    } else {
+      const user = findUserByCredentials(username, password);
+      if (user) {
+        const finalRole = user.role || 'shakha';
+        
+        // Determine Shakha Name (Use Nepali Name if available)
+        let userShakha = null;
+        if (finalRole === 'shakha' || finalRole === 'admin_planning') {
+            userShakha = SHAKHA[user.code.toUpperCase()] || user.code;
+        }
+
         state.currentUser = {
-          id: 'admin', name: 'एडमिन', role: 'admin',
-          avatar: 'A', shakha: null,
-          mahashakha: null, permissions: ['all']
+          id: user.code, name: user.name, role: finalRole,
+          avatar: user.name.charAt(0), shakha: userShakha,
+          mahashakha: user.mahashakha, permissions: user.permissions || []
         };
         
         const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
         localStorage.setItem('nvc_session', JSON.stringify(session));
         
-        console.log('💾 Session saved, showing dashboard...');
-        
-        if (typeof notificationSystem !== 'undefined') {
-          notificationSystem.success('लगइन सफल! ड्यासबोर्डमा जाँदैछ...', {
-            title: 'स्वागत',
-            duration: 2000
-          });
-        }
-        
-        // Force show dashboard
-        setTimeout(() => {
-          console.log('🚀 Forcing dashboard show...');
-          showDashboardPage();
-          window._isLoggingIn = false;
-        }, 100);
-        
+        showDashboardPage();
       } else {
-        const user = findUserByCredentials(username, password);
-        if (user) {
-          console.log('✅ User login successful:', user.name);
-          const finalRole = user.role || 'shakha';
-          
-          // Determine Shakha Name (Use Nepali Name if available)
-          let userShakha = null;
-          if (finalRole === 'shakha' || finalRole === 'admin_planning') {
-              userShakha = SHAKHA[user.code.toUpperCase()] || user.code;
-          }
-
-          state.currentUser = {
-            id: user.code, name: user.name, role: finalRole,
-            avatar: user.name.charAt(0), shakha: userShakha,
-            mahashakha: user.mahashakha, permissions: user.permissions || []
-          };
-          
-          const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
-          localStorage.setItem('nvc_session', JSON.stringify(session));
-          
-          if (typeof notificationSystem !== 'undefined') {
-            notificationSystem.success(`स्वागत ${user.name}! ड्यासबोर्डमा जाँदैछ...`, {
-              title: 'लगइन सफल',
-              duration: 2000
-            });
-          }
-          
-          setTimeout(() => {
-            showDashboardPage();
-            window._isLoggingIn = false;
-          }, 100);
-          
-        } else {
-          console.log('❌ Login failed - invalid credentials');
-          window._isLoggingIn = false;
-          if (typeof notificationSystem !== 'undefined') {
-            notificationSystem.error('युजरनेम वा पासवर्ड मिलेन', {
-              title: 'लगइन असफल'
-            });
-          } else {
-            alert('युजरनेम वा पासवर्ड मिलेन');
-          }
-        }
+        showToast('युजरनेम वा पासवर्ड मिलेन', 'error');
       }
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      window._isLoggingIn = false;
     }
     
-    // Reset button state using enhanced loading manager
-    if (typeof loadingManager !== 'undefined') {
-      loadingManager.setButtonLoading(loginBtn, false);
-    } else {
-      loginBtn.innerHTML = originalText;
-      loginBtn.disabled = false;
-    }
+    loginBtn.innerHTML = originalText;
+    loginBtn.disabled = false;
   }, 1000);
 }
 
@@ -4940,20 +3835,24 @@ function handleForgotPassword(event) {
   const username = prompt('कृपया आफ्नो युजरनेम प्रविष्ट गर्नुहोस्:');
   
   if (!username || !username.trim()) {
-    notificationSystem.warning('युजरनेम खाली हुन सक्दैन।');
+    showToast('युजरनेम खाली हुन सक्दैन।', 'warning');
     return;
   }
+
+  const trimmedUsername = username.trim().toLowerCase();
+
+  if (trimmedUsername === 'admin') {
+    alert("एडमिनको पासवर्ड 'nvc123' मा रिसेट गरिएको छ।");
+    return;
+  }
+
+  const user = findUserByUsername(trimmedUsername);
   
-  // Show loading state
-  const loadingOverlay = loadingManager.showOverlay('पासवर्ड पुन: प्राप्त गर्दै...');
-  
-  setTimeout(() => {
-    loadingManager.hideOverlay(loadingOverlay);
-    notificationSystem.info(`${username} को लागि पासवर्ड रिसेट लिंक तपाईंको इमेलमा पठाइएको छ।`, {
-      title: 'पासवर्ड रिसेट',
-      duration: 5000
-    });
-  }, 1500);
+  if (user) {
+    alert(`'${user.name}' को लागि पासवर्ड रिसेट गरिएको छ।\n\nपूर्वनिर्धारित पासवर्ड हो: '${user.password}'\n\nकृपया फेरि लगइन गर्ने प्रयास गर्नुहोस्।`);
+  } else {
+    showToast('यो युजरनेम प्रणालीमा फेला परेन।', 'error');
+  }
 }
 
 function getAllUsers() {
@@ -5986,7 +4885,7 @@ function showAdminDashboard() {
     
     <div class="card mb-3">
       <div class="card-header d-flex justify-between align-center">
-        <h5 class="mb-0">🔥 हटस्पट ट्र्याकर</h5>
+        <h6 class="mb-0">🔥 हटस्पट ट्र्याकर</h6>
         <a href="#" class="text-primary" onclick="showHotspotMap()">पूर्ण नक्सा हेर्नुहोस्</a>
       </div>
       <div class="card-body">
@@ -9660,26 +8559,11 @@ function showHotspotMap(focusDistrict = null) {
         Object.entries(districtCounts).forEach(([dist, count]) => {
             const coords = DISTRICT_COORDINATES[dist];
             if (coords) {
-                const radius = Math.min(30, 8 + count * 1.5);
-                const color = count > 10 ? '#d32f2f' : count > 5 ? '#ff9800' : '#1976d2';
+                const isHotspot = count > 5;
+                const isCritical = count > 10;
+                let marker;
 
-                const severityClass = count > 10 ? 'red' : count > 5 ? 'orange' : 'blue';
-                const size = Math.max(14, Math.round(radius * 2));
-
-                const icon = L.divIcon({
-                    className: `hotspot-marker-wrap hotspot-marker-wrap--${severityClass}`,
-                    html: `<div class="hotspot-marker hotspot-marker--${severityClass}" style="--hm-size:${size}px;--hm-color:${color};"><span class="hotspot-ripple"></span></div>`,
-                    iconSize: [size, size],
-                    iconAnchor: [size / 2, size / 2]
-                });
-
-                const marker = L.marker(coords, { icon }).addTo(map);
-                
-                // Hover behavior (Tooltip)
-                marker.bindTooltip(`<strong>${dist}</strong><br>उजुरी संख्या: ${count}`, { direction: 'top' });
-                
-                // Click behavior (Show list)
-                marker.on('click', () => {
+                const clickHandler = () => {
                      const districtComplaints = (state.complaints || []).filter(c => c.district === dist);
                      let content = `<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>दर्ता नं</th><th>मिति</th><th>विवरण</th><th>स्थिति</th></tr></thead><tbody>`;
                      
@@ -9699,7 +8583,24 @@ function showHotspotMap(focusDistrict = null) {
                      }
                      content += `</tbody></table></div>`;
                      openModal(`${dist} जिल्लाका उजुरीहरू`, content);
-                });
+                };
+
+                if (isHotspot) {
+                    const rippleColorClass = isCritical ? 'red' : 'yellow';
+                    const size = isCritical ? 18 : 14;
+                    const rippleIcon = L.divIcon({
+                        className: `ripple-marker ${rippleColorClass}`,
+                        iconSize: [size, size]
+                    });
+                    marker = L.marker(coords, { icon: rippleIcon }).addTo(map);
+                } else {
+                    const radius = Math.min(30, 8 + count * 1.5);
+                    const color = '#1976d2';
+                    marker = L.circleMarker(coords, { radius: radius, fillColor: color, color: '#fff', weight: 1, opacity: 1, fillOpacity: 0.7 }).addTo(map);
+                }
+                
+                marker.bindTooltip(`<strong>${dist}</strong><br>उजुरी संख्या: ${count}`, { direction: 'top' });
+                marker.on('click', clickHandler);
             }
         });
         if (focusDistrict && DISTRICT_COORDINATES[focusDistrict]) { map.setView(DISTRICT_COORDINATES[focusDistrict], 10); }

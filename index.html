@@ -75,6 +75,43 @@
         }
     </style>
     <style>
+        /* Ripple effect for map markers */
+        .ripple-marker {
+            position: relative;
+            border-radius: 50%;
+            border: 1px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+
+        .ripple-marker::before,
+        .ripple-marker::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: inherit;
+            transform: translate(-50%, -50%);
+            animation: ripple 2s infinite ease-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ripple-marker::after {
+            animation-delay: 0.75s;
+        }
+
+        @keyframes ripple {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+            to { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+        }
+
+        .ripple-marker.yellow { background-color: #ff9800; }
+        .ripple-marker.red { background-color: #d32f2f; }
+    </style>
+    <style>
         /* Dark Mode Variables */
         body.dark-mode {
             --bg-color: #1a1a2e;
@@ -287,18 +324,12 @@
                 </div>
             </aside>
 
-            <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
             <!-- Main Content -->
             <main class="main-content">
                 <header class="topbar">
                     <div class="d-flex align-center gap-3">
-                        <button class="topbar-menu-btn" id="mobileMenuBtn" type="button" aria-label="Menu">
-                            <i class="fas fa-bars"></i>
-                        </button>
                         <div class="topbar-title" id="pageTitle">ड्यासबोर्ड</div>
                         <div id="sheetActions" class="d-flex align-center gap-2"></div>
-                        <div class="last-updated" id="lastUpdatedLabel"></div>
                     </div>
                     <div class="topbar-actions">
                         <div class="notification-bell" onclick="toggleNotifications()">
