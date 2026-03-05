@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 'Kalimati', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva,'Kalimati', sans-serif;
         }
 
         body {
@@ -313,7 +313,7 @@
             color: #856404;
         }
 
-        .status-badge.processing {
+        .status-badge.progress {
             background: #cce5ff;
             color: #004085;
         }
@@ -386,8 +386,8 @@
             <form id="complaintForm">
                 <!-- उजुरकर्ताको नाम र ठेगाना -->
                 <div class="form-group">
-                    <label class="required"><i class="fas fa-user"></i> उजुरकर्ताको नाम र ठेगाना</label>
-                    <input type="text" class="input-field" placeholder="पूरा नाम, ठेगाना" required>
+                    <label><i class="fas fa-user"></i> उजुरकर्ता</label>
+                    <input type="text" class="input-field" placeholder="ऐच्छिक" required>
                 </div>
 
                 <!-- विपक्षी -->
@@ -399,13 +399,13 @@
                 <!-- उजुरीको विवरण -->
                 <div class="form-group">
                     <label class="required"><i class="fas fa-align-left"></i> उजुरीको विवरण</label>
-                    <textarea class="input-field" rows="4" placeholder="उजुरीको विस्तृत विवरण (मिति, स्थान, घटना) लेख्नुहोस्" required></textarea>
+                    <textarea class="input-field" rows="4" placeholder="उजुरीको विवरण लेख्नुहोस्" required></textarea>
                 </div>
 
                 <!-- अन्य आवश्यक कुरा -->
                 <div class="form-group">
                     <label><i class="fas fa-paperclip"></i> अन्य आवश्यक कुरा</label>
-                    <textarea class="input-field" rows="3" placeholder="साक्षी, प्रमाण, सम्पर्क नम्बर आदि"></textarea>
+                    <textarea class="input-field" rows="3" placeholder="अन्य आवश्यक कुरा भए लेख्नुहोस्"></textarea>
                 </div>
 
                 <button type="submit" class="btn-register">
@@ -450,7 +450,7 @@
         <!-- Footer -->
         <div class="footer">
             <hr>
-            <p>राष्ट्रिय सतर्कता केन्द्र | सत्य निरुपण तथा मेलमिलाप आयोग</p>
+            <p>नेपाल सरकार | राष्ट्रिय सतर्कता केन्द्र</p>
         </div>
     </div>
 
@@ -485,7 +485,7 @@
             document.getElementById('complaintTitle').textContent = `उजुरी नं: ${searchValue}`;
             
             // Random status for demo
-            const statuses = ['pending', 'processing', 'resolved'];
+            const statuses = ['pending', 'progress', 'resolved'];
             const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
             
             const badge = document.getElementById('statusBadge');
@@ -493,10 +493,10 @@
             
             if(randomStatus === 'pending') {
                 badge.classList.add('pending');
-                badge.textContent = 'पेन्डिङ';
-                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी दर्ता भई पेन्डिङ अवस्थामा छ।';
-            } else if(randomStatus === 'processing') {
-                badge.classList.add('processing');
+                badge.textContent = 'छानविन भैरहेको';
+                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी दर्ता भई छानविनको अवस्थामा छ।';
+            } else if(randomStatus === 'progress') {
+                badge.classList.add('progress');
                 badge.textContent = 'प्रक्रियामा';
                 document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी उपर छानविन भइरहेको छ।';
             } else {
