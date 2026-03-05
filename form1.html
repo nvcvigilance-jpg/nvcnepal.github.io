@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>राष्ट्रिय सतर्कता केन्द्र - उजुरी दर्ता</title>
+    <!-- Font Awesome 5 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 'Kalimati', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #003893 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Government Header - Updated */
+        .header {
+            background: white;
+            border-radius: 25px 25px 25px 25px;
+            padding: 25px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: center;
+            border-bottom: 4px solid #ffd700;
+        }
+
+        .header img {
+            width: 80px;
+            height: auto;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        #emblem-fallback {
+            font-size: 4rem;
+            color: #224782;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            color: #ff0000; /* Red color */
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .header i {
+            font-size: 1.8rem;
+            color: #1e1e6b; /* Blue color for fa-file-signature */
+            margin: 5px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            color: #2a5298;
+            font-size: 1rem;
+            font-weight: 500;
+            border-top: 2px solid #706529;
+            border-bottom: 2px solid #6a5f20;
+            display: inline-block;
+            padding: 6px 18px;
+            margin-top: 8px;
+            background: #f8f9fa;
+            border-radius: 30px;
+        }
+
+        /* Main Card */
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        /* Form Title - Simplified */
+        .form-title {
+            display: none; /* Hidden since we have header title */
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #003893;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .form-group label i {
+            margin-right: 8px;
+            color: #667eea;
+            width: 20px;
+        }
+
+        /* Input Fields */
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #003893;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 56, 147, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Button */
+        .btn-register {
+            width: 100%;
+            padding: 14px; /* Slightly reduced padding */
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #003893, #2a5298);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 25px 0 15px 0; /* Adjusted margins */
+            box-shadow: 0 10px 20px rgba(0, 56, 147, 0.3);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 56, 147, 0.4);
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+        }
+
+        /* Success Message */
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px; /* Reduced padding */
+            border-radius: 12px;
+            margin: 10px 0 15px 0; /* Reduced margins */
+            display: none;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid #28a745;
+            animation: slideIn 0.3s ease;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .success-message i {
+            font-size: 1.3rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Status Check Section */
+        .status-section {
+            margin-top: 15px; /* Reduced top margin */
+            border-top: 2px dashed #e0e0e0;
+            padding-top: 15px; /* Reduced padding */
+        }
+
+        .status-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px; /* Reduced margin */
+        }
+
+        .status-title i {
+            font-size: 22px;
+            color: #003893;
+        }
+
+        .status-title h4 {
+            color: #003893;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .status-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px; /* Reduced margin */
+        }
+
+        .status-input-group .input-field {
+            flex: 1;
+            padding: 10px 14px; /* Reduced padding */
+        }
+
+        .btn-check {
+            padding: 0 15px; /* Adjusted padding */
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #d4af37, #996515);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            height: 45px; /* Fixed height for consistency */
+        }
+
+        .btn-check:active {
+            transform: scale(0.98);
+        }
+
+        /* Status Display */
+        .status-display {
+            padding: 12px; /* Reduced padding */
+            border-radius: 12px;
+            background: #f8f9fa;
+            border-left: 4px solid #003893;
+            display: none;
+            margin-top: 8px; /* Reduced margin */
+            animation: slideIn 0.3s ease;
+        }
+
+        .status-display.active {
+            display: block;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-item i {
+            font-size: 24px;
+            color: #003893;
+        }
+
+        .status-details h5 {
+            color: #003893;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .status-details p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 6px; /* Reduced margin */
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px; /* Slightly reduced padding */
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.processing {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-badge.resolved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            font-size: 0.85rem;
+            margin: 20px 0 10px 0; /* Reduced margin */
+            opacity: 0.9;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            margin: 12px 0; /* Reduced margin */
+        }
+
+        /* Required field indicator */
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        /* Kalimati font for Nepali text */
+        .nepali-text {
+            font-family: 'Kalimati', 'Segoe UI', sans-serif;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 400px) {
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .status-input-group {
+                flex-direction: column;
+            }
+            
+            .btn-check {
+                padding: 10px;
+                justify-content: center;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <form action="https://docs.google.com/forms/d/11HrvEvu8tLUSRGzaPUhl4dLwmERuoDB69NMvqkBbqgk/formResponse" method="POST"></form>
+    <div class="container">
+        <!-- Government Header with Coat of Arms -->
+        <div class="header">
+            <img src="emblem.png" alt="नेपाल सरकार" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Emblem_of_Nepal.svg/200px-Emblem_of_Nepal.svg.png'; this.onerror=function(){this.style.display='none'; document.getElementById('emblem-fallback').style.display='block';};">
+            <div id="emblem-fallback" style="display: none; font-size: 4rem; color: #003893; margin-bottom: 15px;">🇳🇵</div>
+            <h1>राष्ट्रिय सतर्कता केन्द्र</h1>
+            <i class="fas fa-file-signature"></i>
+            <p>अनलाइन उजुरी दर्ता</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card">
+            <!-- Complaint Form -->
+            <form id="complaintForm">
+                <!-- उजुरकर्ताको नाम र ठेगाना -->
+                <div class="form-group">
+                    <label class="required"><i class="fas fa-user"></i> उजुरकर्ताको नाम र ठेगाना</label>
+                    <input type="text" class="input-field" placeholder="पूरा नाम, ठेगाना" required>
+                </div>
+
+                <!-- विपक्षी -->
+                <div class="form-group">
+                    <label class="required"><i class="fas fa-user-slash"></i> विपक्षी</label>
+                    <input type="text" class="input-field" placeholder="विपक्षीको नाम र ठेगाना" required>
+                </div>
+
+                <!-- उजुरीको विवरण -->
+                <div class="form-group">
+                    <label class="required"><i class="fas fa-align-left"></i> उजुरीको विवरण</label>
+                    <textarea class="input-field" rows="4" placeholder="उजुरीको विस्तृत विवरण (मिति, स्थान, घटना) लेख्नुहोस्" required></textarea>
+                </div>
+
+                <!-- अन्य आवश्यक कुरा -->
+                <div class="form-group">
+                    <label><i class="fas fa-paperclip"></i> अन्य आवश्यक कुरा</label>
+                    <textarea class="input-field" rows="3" placeholder="साक्षी, प्रमाण, सम्पर्क नम्बर आदि"></textarea>
+                </div>
+
+                <button type="submit" class="btn-register">
+                    <i class="fas fa-paper-plane"></i> उजुरी दर्ता गर्नुहोस्
+                </button>
+
+                <!-- Success Message -->
+                <div class="success-message" id="registerSuccess">
+                    <i class="fas fa-check-circle"></i>
+                    <span>उजुरी सफलतापूर्वक दर्ता भयो! धन्यवाद।</span>
+                </div>
+            </form>
+
+            <!-- Status Check Section -->
+            <div class="status-section">
+                <div class="status-title">
+                    <i class="fas fa-search"></i>
+                    <h4>उजुरीको स्थिति हेर्नुहोस्</h4>
+                </div>
+
+                <div class="status-input-group">
+                    <input type="text" class="input-field" placeholder="उजुरी दर्ता नं. टाइप गर्नुहोस्" id="searchComplaint">
+                    <button class="btn-check" id="checkStatusBtn">
+                        <i class="fas fa-check"></i> हेर्नुहोस्
+                    </button>
+                </div>
+
+                <!-- Status Display -->
+                <div class="status-display" id="statusDisplay">
+                    <div class="status-item">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="status-details">
+                            <h5 id="complaintTitle">उजुरी नं: NVC/२०८१/००१</h5>
+                            <p id="complaintDesc">तपाईंको उजुरी दर्ता भई छानविनको क्रममा छ।</p>
+                            <span class="status-badge processing" id="statusBadge">प्रक्रियामा</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <hr>
+            <p>राष्ट्रिय सतर्कता केन्द्र | सत्य निरुपण तथा मेलमिलाप आयोग</p>
+        </div>
+    </div>
+
+    <script>
+        // Form submit handler
+        document.getElementById('complaintForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const successMsg = document.getElementById('registerSuccess');
+            successMsg.classList.add('show');
+            
+            // Reset form after success
+            this.reset();
+            
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+            }, 4000);
+        });
+
+        // Status check handler
+        document.getElementById('checkStatusBtn').addEventListener('click', function() {
+            const searchValue = document.getElementById('searchComplaint').value;
+            
+            if(searchValue.trim() === '') {
+                alert('कृपया उजुरी दर्ता नं. टाइप गर्नुहोस्');
+                return;
+            }
+
+            const statusDisplay = document.getElementById('statusDisplay');
+            statusDisplay.classList.add('active');
+
+            document.getElementById('complaintTitle').textContent = `उजुरी नं: ${searchValue}`;
+            
+            // Random status for demo
+            const statuses = ['pending', 'processing', 'resolved'];
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge';
+            
+            if(randomStatus === 'pending') {
+                badge.classList.add('pending');
+                badge.textContent = 'पेन्डिङ';
+                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी दर्ता भई पेन्डिङ अवस्थामा छ।';
+            } else if(randomStatus === 'processing') {
+                badge.classList.add('processing');
+                badge.textContent = 'प्रक्रियामा';
+                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी उपर छानविन भइरहेको छ।';
+            } else {
+                badge.classList.add('resolved');
+                badge.textContent = 'समाधान भयो';
+                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरीको फछ्र्यौट भइसकेको छ।';
+            }
+        });
+    </script>
+</body>
+</html>
