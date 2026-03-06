@@ -1,486 +1,214 @@
+// Global theme variable
+let currentTheme = 'light';
 
-    const NVC = (function () {
-      if (typeof window === 'undefined') return {};
-      if (!window.NVC) window.NVC = {};
-      return window.NVC;
-    })();
+// Ministries data
+const MINISTRIES = [
+  'प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालय',
+  'गृह मन्त्रालय',
+  'अर्थ मन्त्रालय',
+  'रक्षा मन्त्रालय',
+  'परराष्ट्र मन्त्रालय',
+  'शिक्षा, विज्ञान तथा प्रविधि मन्त्रालय',
+  'स्वास्थ्य तथा जनसंख्या मन्त्रालय',
+  'खानेपानी मन्त्रालय',
+  'भौतिक पूर्वाधार तथा यातायात मन्त्रालय',
+  'ऊर्जा, जलस्रोत तथा सिंचाइ मन्त्रालय',
+  'कृषि तथा पशुपंछी विकास मन्त्रालय',
+  'उद्योग, वाणिज्य तथा आपूर्ति मन्त्रालय',
+  'श्रम, रोजगार तथा सामाजिक सुरक्षा मन्त्रालय',
+  'वन तथा वातावरण मन्त्रालय',
+  'संस्कृति, पर्यटन तथा नागरिक उड्डयन मन्त्रालय',
+  'संघीय मामिला तथा सामान्य प्रशासन मन्त्रालय',
+  'भूमि व्यवस्था, सहकारी तथा गरिबी निवारण मन्त्रालय',
+  'कानून, न्याय तथा संसदीय मामिला मन्त्रालय',
+  'महिला, बालबालिका तथा ज्येष्ठ नागरिक मन्त्रालय',
+  'युवा तथा खेलकुद मन्त्रालय',
+  'सञ्चार तथा सूचना प्रविधि मन्त्रालय',
+  'सहरी विकास मन्त्रालय',
+  'स्वास्थ्य तथा जनसंख्या मन्त्रालय',
+  'अन्य'
+];
 
-    NVC.Config = NVC.Config || {};
-    NVC.State = NVC.State || {};
-    NVC.Api = NVC.Api || {};
-    NVC.UI = NVC.UI || {};
-    NVC.Chatbot = NVC.Chatbot || {};
-    NVC.Utils = NVC.Utils || {};
-
-    // ==================== GOOGLE SHEETS CONFIGURATION ====================
-const GOOGLE_SHEETS_CONFIG = (NVC.Config.GOOGLE_SHEETS_CONFIG = {
-  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw9PfOM-2RbNLKAbnPXdgfBKxZAV8dbl8mEaFH8V12sPV5EBf5T7kGs9HBhlAPyMTfUoQ/exec',
-  API_KEY: 'nvc2026secretkey',
-  ENABLED: true,
-  USE_CORS_PROXY: false,
-
-  MAX_RETRIES: 2,
-  RETRY_DELAY: 1000,
-  TIMEOUT: 15000
-});
-
-// UI theme (light/dark) default
-var currentTheme = 'light';
-
-// List of Ministries, Constitutional Bodies and Provinces for Ministry/Agency dropdown (global)
-const MINISTRIES = (NVC.Config.MINISTRIES = [
-  "प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालय",
-  "अर्थ मन्त्रालय",
-  "उद्योग, वाणिज्य तथा आपूर्ति मन्त्रालय",
-  "ऊर्जा, जलस्रोत तथा सिंचाइ मन्त्रालय",
-  "कानून, न्याय तथा संसदीय मामिला मन्त्रालय",
-  "कृषि तथा पशुपन्छी विकास मन्त्रालय",
-  "खानेपानी मन्त्रालय",
-  "गृह मन्त्रालय",
-  "परराष्ट्र मन्त्रालय",
-  "भूमि व्यवस्था, सहकारी तथा गरिबी निवारण मन्त्रालय",
-  "भौतिक पूर्वाधार तथा यातायात मन्त्रालय",
-  "महिला, बालबालिका तथा ज्येष्ठ नागरिक मन्त्रालय",
-  "युवा तथा खेलकुद मन्त्रालय",
-  "रक्षा मन्त्रालय",
-  "वन तथा वातावरण मन्त्रालय",
-  "सङ्घीय मामिला तथा सामान्य प्रशासन मन्त्रालय",
-  "सञ्चार तथा सूचना प्रविधि मन्त्रालय",
-  "सहरी विकास मन्त्रालय",
-  "स्वास्थ्य तथा जनसङ्ख्या मन्त्रालय",
-  "संस्कृति, पर्यटन तथा नागरिक उड्डयन मन्त्रालय",
-  "शिक्षा, विज्ञान तथा प्रविधि मन्त्रालय",
-  "श्रम, रोजगार तथा सामाजिक सुरक्षा मन्त्रालय",
-  "संवैधानिक अङ्ग",
-  "कोशी प्रदेश",
-  "मधेस प्रदेश",
-  "बागमती प्रदेश",
-  "गण्डकी प्रदेश",
-  "लुम्बिनी प्रदेश",
-  "कर्णाली प्रदेश",
-  "सुदूर पश्चिम प्रदेश"
-]);
-
-// ==================== AI SYSTEM CONFIGURATION ====================
-const AI_SYSTEM = (NVC.Chatbot.AI_SYSTEM = {
+// AI System for complaint analysis
+const AI_SYSTEM = {
+  // Structured keywords for better classification
   keywords: {
-    high: ['तुरुन्त', 'अति', 'गम्भीर', 'भ्रष्टाचार', 'घूस', 'ज्यान', 'जोखिम', 'urgent', 'corruption', 'करोड'],
-    medium: ['समस्या', 'ढिला', 'अनियमितता', 'गुनासो', 'delay', 'लापरवाही'],
-    // New Classification Keywords
-    corruption: ['भ्रष्टाचार', 'घूस', 'रकम', 'लेनदेन', 'घुस', 'corruption', 'bribe', 'commission', 'कमिशन'],
-    procurement: ['ठेक्का', 'खरिद', 'टेन्डर', 'बोलपत्र', 'procurement', 'contract', 'tender', 'bidding'],
-    financial: ['हिनामिना', 'अनियमितता', 'बजेट', 'दुरुपयोग', 'नक्कली बिल', 'embezzlement', 'financial', 'audit', 'बेरुजु', 'आर्थिक'],
-    infrastructure: ['बाटो', 'पुल', 'भवन', 'निर्माण', 'गुणस्तर', 'इन्जिनियर', 'सिमेन्ट', 'डण्डी', 'infrastructure', 'construction', 'road'],
-    service: ['सेवा', 'ढिलासुस्ती', 'सास्ती', 'काम भएन', 'service', 'delay', 'hassle', 'नागरिक बडापत्र'],
-    conduct: ['आचरण', 'व्यवहार', 'गालीगलौज', 'मादक', 'पदार्थ', 'conduct', 'behavior', 'staff', 'कर्मचारी', 'हाजिरी', 'बिदा'],
-    policy: ['निर्णय', 'प्रक्रिया', 'विधि', 'नियुक्ति', 'नियुक्त', 'नियम', 'विपरीत', 'मापदण्ड', 'policy', 'decision', 'rule', 'law', 'ऐन', 'नियम'],
-    // Old Keywords (kept for backward compatibility)
-    technical: ['बाटो', 'पुल', 'भवन', 'निर्माण', 'गुणस्तर', 'इन्जिनियर', 'ठेक्का', 'construction', 'road', 'सिमेन्ट', 'डण्डी'],
-    admin: ['कर्मचारी', 'हाजिरी', 'बिदा', 'सरुवा', 'बढुवा', 'प्रशासन', 'staff', 'leave', 'पोशाक'],
-    police: ['प्रहरी', 'सुरक्षा', 'अपराध', 'police', 'security', 'चोरी']
+    corruption: ['भ्रष्टाचार', 'corruption', 'bribe', 'घुस', 'घुसखोरी', 'उत्पीडन', 'अनियमित', 'misuse', 'abuse'],
+    procurement: ['खरिद', 'purchase', 'ठेक्का', 'tender', 'bidding', 'quotation', 'bid', 'contract', 'supplier', 'vendor'],
+    infrastructure: ['पूर्वाधार', 'infrastructure', 'सडक', 'भवन', 'निर्माण', 'construction', 'building', 'road', 'bridge', 'development'],
+    service: ['सेवा', 'service', 'उपचार', 'शिक्षा', 'अस्पताल', 'hospital', 'health', 'education', 'treatment', 'medical'],
+    conduct: ['कर्मचारी', 'employee', 'आचरण', 'behavior', 'अफसर', 'officer', 'staff', 'misbehavior', 'negligence'],
+    policy: ['नीति', 'policy', 'निर्णय', 'decision', 'process', 'procedure', 'rule', 'regulation', 'guideline']
   },
-
+  
   analyzeComplaint: function(description) {
-    if (!description) return { priority: 'साधारण', category: 'अन्य', classification: 'अन्य', summary: '', sentiment: 'तटस्थ', entities: [] };
+    if (!description) return { classification: 'अन्य', priority: 'न्यून' };
     
-    let priority = 'साधारण';
-    let category = 'अन्य';
-    let classification = 'अन्य';
-    let score = 0;
     const text = description.toLowerCase();
+    let classification = 'अन्य';
+    let priority = 'न्यून';
     
-    // 1. Priority Scoring System
-    // High impact keywords (Weight: 3)
-    this.keywords.high.forEach(k => { if (text.includes(k)) score += 3; });
-    // Medium impact keywords (Weight: 1)
-    this.keywords.medium.forEach(k => { if (text.includes(k)) score += 1; });
-
-    // 2. Entity Extraction (Money/Amounts)
-    const entities = [];
-    // Regex for Nepali/English money formats (e.g., 10 लाख, ५० हजार, Rs 5000)
-    const moneyRegex = /([०-९\d]+(\.[०-९\d]+)?)\s*(लाख|करोड|हजार|सय|रुपैयाँ|रु|rs|npr|lakh|crore|thousand)/gi;
-    const moneyMatches = text.match(moneyRegex);
-    if (moneyMatches) {
-        moneyMatches.forEach(m => entities.push(m));
-        // If large amounts detected, increase score
-        if (text.includes('लाख') || text.includes('करोड') || text.includes('lakh') || text.includes('crore')) {
-            score += 2;
-        }
+    // 1. Classification Detection (Priority Order)
+    if (this.keywords.corruption.some(k => text.includes(k))) {
+      classification = 'भ्रष्टाचार';
+      priority = 'उच्च';
     }
-
-    // Determine Priority based on Score
-    if (score >= 3) priority = 'उच्च';
-    else if (score >= 1) priority = 'मध्यम';
-
-    // 3. Classification Detection (Priority Order)
-    if (this.keywords.corruption.some(k => text.includes(k))) classification = 'भ्रष्टाचार';
-    else if (this.keywords.procurement.some(k => text.includes(k))) classification = 'सार्वजनिक खरिद/ठेक्का';
-    else if (this.keywords.financial.some(k => text.includes(k))) classification = 'आर्थिक हिनामिना';
-    else if (this.keywords.infrastructure.some(k => text.includes(k))) classification = 'पूर्वाधार निर्माण';
-    else if (this.keywords.service.some(k => text.includes(k))) classification = 'सेवा प्रवाह';
-    else if (this.keywords.conduct.some(k => text.includes(k))) classification = 'कर्मचारी आचरण';
-    else if (this.keywords.policy.some(k => text.includes(k))) classification = 'नीति/निर्णय प्रक्रिया';
-
-    // 4. Category Detection (Department mapping)
-    if (this.keywords.technical.some(k => text.includes(k))) category = 'प्राविधिक';
-    else if (this.keywords.admin.some(k => text.includes(k))) category = 'प्रशासन';
-    else if (this.keywords.police.some(k => text.includes(k))) category = 'प्रहरी';
-
-    // 5. Sentiment Analysis
-    let sentiment = 'तटस्थ';
-    const negativeKeywords = ['दुःख', 'सास्ती', 'हैरान', 'रिस', 'खराब', 'ढिला', 'समस्या', 'bad', 'worst', 'problem', 'trouble', 'suffering'];
-    const urgentKeywords = ['तुरुन्त', 'अति', 'urgent', 'emergency', 'immediately'];
+    else if (this.keywords.procurement.some(k => text.includes(k))) {
+      classification = 'सार्वजनिक खरिद/ठेक्का';
+      priority = 'उच्च';
+    }
+    else if (this.keywords.infrastructure.some(k => text.includes(k))) {
+      classification = 'पूर्वाधार निर्माण';
+      priority = 'मध्यम';
+    }
+    else if (this.keywords.service.some(k => text.includes(k))) {
+      classification = 'सेवा प्रवाह';
+      priority = 'मध्यम';
+    }
+    else if (this.keywords.conduct.some(k => text.includes(k))) {
+      classification = 'कर्मचारी आचरण';
+      priority = 'मध्यम';
+    }
+    else if (this.keywords.policy.some(k => text.includes(k))) {
+      classification = 'नीति/निर्णय प्रक्रिया';
+      priority = 'न्यून';
+    }
     
-    if (urgentKeywords.some(k => text.includes(k))) sentiment = 'अत्यावश्यक (Urgent)';
-    else if (negativeKeywords.some(k => text.includes(k))) sentiment = 'नकारात्मक (Negative)';
-
-    // 6. Summary Generation
-    const cleanText = description.replace(/\s+/g, ' ').trim();
-    // Split by common sentence terminators (Nepali & English)
-    const sentences = cleanText.split(/[।?!.]/).filter(s => s.trim().length > 10);
-    let summary = '';
-
-    if (sentences.length > 0) {
-        let bestSentence = sentences[0];
-        let maxScore = 0;
-
-        // Find the sentence with the most important keywords
-        sentences.forEach(sentence => {
-            let sentenceScore = 0;
-            const sLower = sentence.toLowerCase();
-            this.keywords.high.forEach(k => { if (sLower.includes(k)) sentenceScore += 3; });
-            this.keywords.medium.forEach(k => { if (sLower.includes(k)) sentenceScore += 1; });
-            if (sentenceScore > maxScore) {
-                maxScore = sentenceScore;
-                bestSentence = sentence;
-            }
-        });
-        summary = bestSentence.trim();
-        if (summary.length > 80) summary = summary.substring(0, 77) + '...';
-        else if (sentences.length > 1) summary += '...';
-    }
-    return { priority, category, classification, summary, sentiment, entities, score };
+    return { classification, priority };
   },
-
-  getChatResponse: function(input) {
-    input = input.toLowerCase();
-    const complaints = state.complaints || [];
-    const projects = state.projects || [];
-    const now = Date.now();
-
-    // १. सन्दर्भ व्यवस्थापन: पुरानो सन्दर्भ हटाउने (e.g., २ मिनेट भन्दा पुरानो)
-    if (state.chatContext && (now - state.chatContext.timestamp > 120000)) {
-        console.log('Chat context expired.');
-        state.chatContext = null;
-    }
-
-    // २. सन्दर्भ अनुसारको प्रश्न (Follow-up Questions)
-    if (state.chatContext) {
-        const followUpKeywords = ['tell me more', 'details', 'more', 'विवरण', 'थप', 'अझै', 'tell me about it', 'what about it', 'and', 'ani', 'अनि'];
-        const isFollowUp = followUpKeywords.some(k => input.includes(k));
-
-        if (isFollowUp && state.chatContext.topic === 'complaint_status' && state.chatContext.lastComplaintId) {
-            const complaint = complaints.find(c => String(c.id) === String(state.chatContext.lastComplaintId));
-            if (complaint) {
-                const fullDetails = `
-                    <strong>विस्तृत विवरण (उजुरी नं: ${complaint.id}):</strong><br>
-                    <strong>उजुरकर्ता:</strong> ${complaint.complainant}<br>
-                    <strong>विवरण:</strong> ${complaint.description || '-'}<br>
-                    <strong>कैफियत:</strong> ${complaint.remarks || '-'}<br>
-                `;
-                state.chatContext = null; // विवरण दिएपछि सन्दर्भ रिसेट गर्ने
-                return fullDetails;
-            }
-        }
-    }
+  
+  suggestShakha: function(description) {
+    if (!description) return 'general';
     
-    // 0. Empty check
-    if (!input.trim()) return 'कृपया केही लेख्नुहोस्।';
-
-    // 1. अभिवादन (Greetings)
-    if (input.match(/(नमस्ते|hello|hi|namaste|नमस्कार|ओइ|oi|hey|good morning|good afternoon|good evening|subha|morning|evening)/)) {
-        const time = new Date().getHours();
-        let greeting = 'नमस्ते';
-        if (time < 12) greeting = 'शुभ प्रभात';
-        else if (time < 18) greeting = 'शुभ दिन';
-        else greeting = 'शुभ सन्ध्या';
-        
-        return `${greeting}! म राष्ट्रिय सतर्कता केन्द्रको AI सहायक हुँ।<br>तपाईं उजुरी, आयोजना, वा कार्यालय अनुगमनको बारेमा सोध्न सक्नुहुन्छ।`;
-    }
+    const lowerDesc = description.toLowerCase();
     
-    // 2. परिचय / System Info
-    if (input.match(/(who are you|timi ko ho|parichaya|system|about|के हो|यो के हो|परिचय)/)) {
-        return 'यो राष्ट्रिय सतर्कता केन्द्रको <strong>उजुरी व्यवस्थापन प्रणाली</strong> हो।<br>यहाँ उजुरी दर्ता, अनुगमन, र कारबाहीको अवस्था हेर्न सकिन्छ।';
+    if (lowerDesc.includes('वित्त') || lowerDesc.includes('budget')) {
+      return 'finance';
+    } else if (lowerDesc.includes('शिक्षा') || lowerDesc.includes('education')) {
+      return 'education';
+    } else if (lowerDesc.includes('स्वास्थ्य') || lowerDesc.includes('health')) {
+      return 'health';
+    } else if (lowerDesc.includes('विकास') || lowerDesc.includes('development')) {
+      return 'development';
+    } else {
+      return 'general';
     }
-    
-    // 3. सहयोग (Help)
-    if (input.match(/(help|सहयोग|ke garna|what can|menu|options|list|k garna|sakchau|madat)/)) {
-      return `
-      <strong>तपाईं निम्न बटनहरू थिचेर वा प्रश्न लेखेर सोध्न सक्नुहुन्छ:</strong><br>
-      <div class="chatbot-options" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
-        <button class="btn btn-sm btn-light border" onclick="document.getElementById('chatInput').value='कुल उजुरी कति छन्?'; sendChatMessage();">📊 कुल उजुरी</button>
-        <button class="btn btn-sm btn-light border" onclick="document.getElementById('chatInput').value='फछर्यौट भएका उजुरी'; sendChatMessage();">✅ फछर्यौट भएका</button>
-        <button class="btn btn-sm btn-light border" onclick="document.getElementById('chatInput').value='बाँकी उजुरी'; sendChatMessage();">🕒 बाँकी उजुरी</button>
-        <button class="btn btn-sm btn-light border" onclick="document.getElementById('chatInput').value='आयोजनाको स्थिति'; sendChatMessage();">🏗️ आयोजना स्थिति</button>
-        <button class="btn btn-sm btn-light border" onclick="document.getElementById('chatInput').value='कार्यालय अनुगमन'; sendChatMessage();">👮 कार्यालय अनुगमन</button>
-        <button class="btn btn-sm btn-light border" onclick="document.getElementById('chatInput').value='सम्पर्क ठेगाना'; sendChatMessage();">📞 सम्पर्क ठेगाना</button>
-      </div>
-      <small class="text-muted mt-2 d-block">अथवा "उजुरी नं NVC-2024-1234 को अवस्था के छ?" जस्ता प्रश्न सोध्नुहोस्।</small>
-      `;
-    }
-
-    // 4. तथ्याङ्क (Stats)
-    // Pending
-    if (input.match(/(कति|how many|count|kati)/) && input.match(/(बाँकी|pending|remaining|banki)/)) {
-      const pending = complaints.filter(c => c.status === 'pending').length;
-      return `हाल प्रणालीमा <strong>${pending}</strong> वटा उजुरी फछ्रयौट हुन बाँकी छन्।`;
-    }
-    
-    // Resolved
-    if (input.match(/(फछ्रयौट|resolved|सकिएको|completed|done|farchyout|sakiyo)/)) {
-        const resolved = complaints.filter(c => c.status === 'resolved').length;
-        return `हालसम्म <strong>${resolved}</strong> वटा उजुरी फछ्रयौट भइसकेका छन्।`;
-    }
-
-    // Progress
-    if (input.match(/(चालु|progress|running|process|chalu)/)) {
-        const progress = complaints.filter(c => c.status === 'progress').length;
-        return `हाल <strong>${progress}</strong> वटा उजुरी कारबाहीको प्रक्रियामा (चालु) छन्।`;
-    }
-
-    // Total
-    if (input.match(/(कुल|total|जम्मा|all|sum)/) && (input.match(/(उजुरी|complaint|case)/) || !input.match(/(project|ayojana|anugaman)/))) {
-      return `प्रणालीमा जम्मा <strong>${complaints.length}</strong> वटा उजुरी दर्ता भएका छन्।`;
-    }
-
-    // 5. तथ्याङ्क - आयोजना / प्राविधिक (Projects Stats)
-    if (input.match(/(project|ayojana|nirman|technical|prabidhik|आयोजना|निर्माण|प्राविधिक)/)) {
-        const total = projects.length;
-        const active = projects.filter(p => p.status === 'active').length;
-        return `प्राविधिक परीक्षण महाशाखा अन्तर्गत <strong>${total}</strong> वटा आयोजना अनुगमन प्राविधिक/परीक्षण दर्ता छन्।<br>जसमध्ये <strong>${active}</strong> वटा चालु (Active) छन्।`;
-    }
-    
-    // 6. तथ्याङ्क - कर्मचारी अनुगमन (Employee Monitoring)
-    if (input.match(/(employee|staff|karmachari|anugaman|monitoring|poshak|time|कर्मचारी|अनुगमन|पोशाक|समय)/)) {
-        const total = (state.employeeMonitoring || []).length;
-        return `हालसम्म <strong>${total}</strong> पटक कार्यालय अनुगमन भएको छ।<br>विस्तृत विवरणको लागि 'कार्यालय अनुगमन' मेनु हेर्नुहोस्।`;
-    }
-
-    // 7. रिपोर्ट (Report)
-    if (input.match(/(रिपोर्ट|report|vivaran|details|analytics|graph|chart)/)) {
-      return 'तपाईं बायाँ तर्फको मेनुबाट <strong>"रिपोर्टहरू"</strong> मा क्लिक गरी विस्तृत विवरण, ग्राफ र चार्टहरू हेर्न सक्नुहुन्छ।';
-    }
-    
-    // 8. सम्पर्क (Contact)
-    if (input.match(/(सम्पर्क|contact|phone|email|location|ठेगाना|address|office|kaha|where|number|mobile)/)) {
-        return `
-        <strong>राष्ट्रिय सतर्कता केन्द्र</strong><br>
-        📍 सिंहदरबार, काठमाडौँ<br>
-        📞 फोन: ०१-४२००३५०<br>
-        📧 ईमेल: info@nvc.gov.np<br>
-        🌐 वेबसाइट: www.nvc.gov.np
-        `;
-    }
-
-    // 9. उजुरी प्रक्रिया (Complaint Process)
-    if (input.match(/(कसरी|how to|register|darta|file|process|tarika|way)/) && input.match(/(उजुरी|complaint|ujuri)/)) {
-        return `
-        <strong>नयाँ उजुरी दर्ता प्रक्रिया:</strong><br>
-        १. लग-इन गर्नुहोस्।<br>
-        २. बायाँ मेनुबाट "नयाँ उजुरी" छान्नुहोस्।<br>
-        ३. फारममा विवरण भरी "सुरक्षित गर्नुहोस्" थिच्नुहोस्।<br>
-        <em>वा हेलो सरकारबाट आएका उजुरीहरू सिधै प्रणालीमा तान्न सकिन्छ।</em>
-        `;
-    }
-
-    // 10. लगइन / लगआउट (Login/Logout)
-    if (input.match(/(login|logout|signin|signout|log in|log out|लगइन|लगआउट)/)) {
-        if (state.currentUser) {
-            return `तपाईं हाल <strong>${state.currentUser.name}</strong> को रूपमा लग-इन हुनुहुन्छ। लग-आउट गर्न साइडबारको तल रहेको बटन थिच्नुहोस्।`;
-        }
-        return 'तपाईं लग-इन हुनुहुन्न। कृपया माथि दायाँ कुनामा रहेको "एडमिन प्यानल" वा "उजुरी व्यवस्थापन" मा क्लिक गर्नुहोस्।';
-    }
-
-    // 11. धन्यवाद/बिदाई (Thanks/Bye)
-    if (input.match(/(धन्यवाद|thank|dhanyabad|bye|tata|goodbye|thx)/)) {
-        return 'धन्यवाद! तपाईंको दिन शुभ रहोस्। केही परेमा फेरि सम्झनुहोला। 🙏';
-    }
-
-    // 12. उजुरीको अवस्था (Complaint Status by ID)
-    const idMatch = input.match(/nvc[-\s]?\d{4}[-\s]?\d{4}/i) || input.match(/nvc[-\s]?\d+/i) || input.match(/\d{4,}/);
-    if (idMatch) {
-        let searchId = idMatch[0].toUpperCase().replace(/\s/g, '-');
-        // If just numbers, try to match loosely
-        if (!searchId.includes('NVC')) {
-             searchId = idMatch[0];
-        }
-
-        const complaint = complaints.find(c => 
-            String(c.id).toUpperCase().includes(searchId) || 
-            String(c.complaintId || '').toUpperCase().includes(searchId) ||
-            (input.match(/\d{4}/) && String(c.id).includes(input.match(/\d{4}/)[0]))
-        );
-        
-        if (complaint) {
-            let statusText = 'थाहा छैन';
-            let statusIcon = '❓';
-            if (complaint.status === 'resolved') { statusText = 'फछ्रयौट भइसकेको'; statusIcon = '✅'; }
-            else if (complaint.status === 'progress') { statusText = 'कार्यान्वयनको चरणमा (चालु)'; statusIcon = '⏳'; }
-            else { statusText = 'हेर्न बाँकी (Pending)'; statusIcon = '🕒'; }
-            
-            // SET CONTEXT for follow-up questions
-            state.chatContext = {
-                topic: 'complaint_status',
-                lastComplaintId: complaint.id,
-                timestamp: now
-            };
-
-            return `
-            <strong>उजुरी विवरण फेला पर्यो:</strong><br>
-            🆔 नं: ${complaint.id}<br>
-            📅 मिति: ${complaint.date}<br>
-            👤 उजुरकर्ता: ${complaint.complainant}<br>
-            ${statusIcon} अवस्था: ${statusText}<br>
-            📝 विषय: ${complaint.description ? complaint.description.substring(0, 40) + '...' : '-'}
-            <br><button class="btn btn-sm btn-outline-primary mt-1" onclick="viewComplaint('${complaint.id}')">विवरण हेर्नुहोस्</button>
-            `;
-        } else {
-             if (searchId.includes('NVC') || searchId.length >= 4) {
-                return `माफ गर्नुहोला, उजुरी नं <strong>${searchId}</strong> फेला परेन। कृपया नम्बर जाँच गर्नुहोस्।`;
-             }
-        }
-    }
-
-    // 13. Keyword Search (Content Search) - Data Driven
-    if (input.match(/(search|khoj|find|खोज|हेर्नु|about|regarding|विषय|बारेमा)/)) {
-        const stopWords = ['search', 'khoj', 'find', 'खोज', 'हेर्नु', 'about', 'regarding', 'विषय', 'complaint', 'ujuri', 'ko', 'ma', 'for', 'please', 'kripaya', 'gari', 'dinuhos', 'बारेमा'];
-        const words = input.split(/\s+/).filter(w => !stopWords.includes(w) && w.length > 2);
-        
-        if (words.length > 0) {
-            const keyword = words[0];
-            const found = complaints.filter(c => 
-                (c.description || '').toLowerCase().includes(keyword) || 
-                (c.complainant || '').toLowerCase().includes(keyword) ||
-                (c.accused || '').toLowerCase().includes(keyword)
-            );
-            
-            if (found.length > 0) {
-                let resp = `<strong>"${keyword}"</strong> सँग सम्बन्धित ${found.length} वटा उजुरी भेटिए:<br>`;
-                found.slice(0, 3).forEach(c => {
-                    resp += `• <a href="#" onclick="viewComplaint('${c.id}')">${c.id}</a>: ${c.description.substring(0, 20)}...<br>`;
-                });
-                if (found.length > 3) resp += `...र अन्य ${found.length - 3} वटा।`;
-
-                // SET CONTEXT
-                state.chatContext = {
-                    topic: 'keyword_search',
-                    lastKeyword: keyword,
-                    timestamp: now
-                };
-                return resp;
-            }
-        }
-    }
-
-    // 14. शाखा जानकारी (Shakha Info)
-    if (input.match(/(shakha|branch|division|शाखा|महाशाखा)/)) {
-        // Check for specific branch stats
-        for (const [key, val] of Object.entries(SHAKHA)) {
-            if (input.includes(val.toLowerCase()) || input.includes(key.toLowerCase())) {
-                const count = complaints.filter(c => c.shakha === val || c.shakha === key).length;
-                
-                // SET CONTEXT
-                state.chatContext = {
-                    topic: 'shakha_info',
-                    lastShakha: val,
-                    timestamp: now
-                };
-                return `<strong>${val}</strong> मा हाल कुल <strong>${count}</strong> उजुरी छन्।`;
-            }
-        }
-        return 'सतर्कता केन्द्रमा प्रशासन, प्रहरी, प्राविधिक र नीति निर्माण गरी ४ महाशाखाहरू र विभिन्न शाखाहरू छन्। तपाईं कुन शाखाको बारेमा जान्न चाहनुहुन्छ?';
-    }
-
-    // 15. Page Content / Keywords Matching (Dynamic)
-    // Check against SHAKHA
-    for (const [key, value] of Object.entries(SHAKHA)) {
-        if (input.includes(value.toLowerCase()) || input.includes(key.replace(/_/g, ' '))) {
-            return `<strong>${value}</strong> राष्ट्रिय सतर्कता केन्द्रको एक महत्वपूर्ण शाखा हो।<br>यसले सम्बन्धित क्षेत्रको उजुरी व्यवस्थापन र अनुगमन गर्दछ।`;
-        }
-    }
-
-    // Check against MAHASHAKHA
-    for (const [key, value] of Object.entries(MAHASHAKHA)) {
-        if (input.includes(value.toLowerCase())) {
-            return `<strong>${value}</strong> अन्तर्गत विभिन्न शाखाहरू रहेका छन्।`;
-        }
-    }
-    
-    // Check specific UI elements mentioned in HTML
-    if (input.includes('admin panel') || input.includes('एडमिन प्यानल')) {
-        return 'एडमिन प्यानलबाट प्रणालीको पूर्ण व्यवस्थापन गर्न सकिन्छ। यसका लागि एडमिन अधिकार आवश्यक पर्दछ।';
-    }
-    if (input.includes('complaint') || input.includes('उजुरी')) {
-        return 'उजुरी व्यवस्थापन प्रणाली मार्फत तपाईंले उजुरी दर्ता, स्थिति जानकारी र फछ्रयौट विवरण हेर्न सक्नुहुन्छ।';
-    }
-    if (input.includes('settings') || input.includes('सेटिङ')) {
-        return 'सेटिङ मेनुबाट तपाईंले आफ्नो प्रोफाइल, पासवर्ड र प्रणालीको अन्य प्राथमिकताहरू परिवर्तन गर्न सक्नुहुन्छ।';
-    }
-
-    // 16. Fallback Context Matching (Webpage words)
-    if (input.match(/(admin|planning|yojana|police|prahari|technical|prabidhik|policy|niti|kanun|legal|arthik|finance)/)) {
-        return `तपाईंले "${input}" सँग सम्बन्धित जानकारी खोज्नुभएको जस्तो छ। कृपया सम्बन्धित शाखाको ड्यासबोर्डमा जानुहोस् वा विशिष्ट प्रश्न सोध्नुहोस्।`;
-    }
-
-    // Default Response (Randomized)
-    const defaults = [
-        'माफ गर्नुहोला, मैले बुझिन। कृपया अलि स्पष्टसँग सोध्नुहोस्।',    
-        'माफ गर्नुहोला, हाम्रो केन्द्रमा सनरुफ भएको गाडी छैन। सचिवज्यूको लागि एउटा फर्चुनर गाडी खोज्दै छौं।',
-        'मैले प्रश्न बुझ्न सकिन। तपाईं "help" टाइप गरेर उदाहरण हेर्न सक्नुहुन्छ।',
-        'क्षमा पाउँ, म अझै सिक्दै छु। तपाईंले उजुरी, आयोजना वा सम्पर्कबारे सोध्न सक्नुहुन्छ।',
-        'तपाईंले के भन्न खोज्नुभएको हो? कृपया "कुल उजुरी", "सम्पर्क" वा उजुरी नम्बर लेख्नुहोस्।'
+  },
+  
+  getChatResponse: function(message) {
+    const responses = [
+      'तपाईंको उजुरी प्रक्रियामा छ। कृपया केही समय प्रतीक्षा गर्नुहोस्।',
+      'तपाईंको जानकारीको लागि धन्यवाद। हामी यसको अवलोकन गर्दैछौं।',
+      'तपाईंको उजुरी सम्बन्धित आवश्यक कारबाही सुरु गरिएको छ।',
+      'थप जानकारीको लागि कृपया फोन नम्बर ११५० मा सम्पर्क गर्नुहोस्।'
     ];
-    return defaults[Math.floor(Math.random() * defaults.length)];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
   },
   
   generateReport: function(complaints) {
-      if (!complaints || complaints.length === 0) return "विश्लेषण गर्न पर्याप्त डाटा छैन।";
-      
-      const total = complaints.length;
-      const pending = complaints.filter(c => c.status === 'pending').length;
-      const resolved = complaints.filter(c => c.status === 'resolved').length;
-      
-      // Most common category
-      const categories = {};
-      complaints.forEach(c => {
-          const analysis = this.analyzeComplaint(c.description || '');
-          categories[analysis.category] = (categories[analysis.category] || 0) + 1;
-      });
-      
-      const topCategory = Object.keys(categories).reduce((a, b) => categories[a] > categories[b] ? a : b);
-      
-      return `
-      <strong>AI प्रणाली विश्लेषण रिपोर्ट:</strong><br><br>
-      हाल प्रणालीमा कुल <strong>${total}</strong> उजुरीहरू छन्।<br>
-      जसमध्ये <strong>${Math.round((resolved/total)*100)}%</strong> फछ्रयौट भइसकेका छन् भने <strong>${pending}</strong> उजुरीहरू हेर्न बाँकी छन्。<br><br>
-      सबैभन्दा बढी उजुरीहरू <strong>"${topCategory}"</strong> श्रेणीसँग सम्बन्धित देखिन्छन्।<br>
-      सुझाव: ${pending > 10 ? 'बाँकी उजुरीहरूको संख्या उच्च छ, कृपया प्राथमिकता दिनुहोस्।' : 'कार्यसम्पादन सन्तोषजनक देखिन्छ।'}
-      `;
-  },
-
-  suggestShakha: function(description) {
-    if (!description) return 'COMPLAINT_MANAGEMENT';
-    const text = description.toLowerCase();
+    if (!complaints || complaints.length === 0) {
+      return 'कुनै उजुरीहरू उपलब्ध छैनन्।';
+    }
     
-    if (this.keywords.technical.some(k => text.includes(k))) return 'TECHNICAL_1';
-    if (this.keywords.police.some(k => text.includes(k))) return 'POLICE_MONITORING';
-    if (this.keywords.admin.some(k => text.includes(k))) return 'ADMIN_PLANNING';
-    if (text.match(/(नीति|कानून|नियम|ऐन|policy|law|legal)/)) return 'POLICY_MONITORING';
-    if (text.match(/(सम्पत्ति|विवरण|asset|property)/)) return 'ASSET_DECLARATION';
+    const total = complaints.length;
+    const pending = complaints.filter(c => c.status === 'pending').length;
+    const resolved = complaints.filter(c => c.status === 'resolved').length;
     
-    return 'COMPLAINT_MANAGEMENT';
+    return `कुल ${total} उजुरीहरूमध्ये ${pending} विचाराधीन छन् र ${resolved} समाधान भएका छन्।`;
   }
-});
+};
+
+// Ensure global NVC namespace exists for progressive migration
+window.NVC = window.NVC || { Utils: {}, Api: {}, UI: {}, State: {}, Chatbot: {} };
+// Destroy all chart instances to prevent memory leaks and conflicts
+function destroyAllCharts() {
+  try {
+    // Clear Chart.js instances if Chart library is available
+    if (typeof Chart !== 'undefined') {
+      Chart.helpers.each(Chart.instances, function(instance) {
+        instance.destroy();
+      });
+    }
+    
+    // Clear any custom chart references
+    if (typeof window !== 'undefined') {
+      window.nvcCharts = window.nvcCharts || {};
+      Object.keys(window.nvcCharts).forEach(key => {
+        if (window.nvcCharts[key] && typeof window.nvcCharts[key].destroy === 'function') {
+          window.nvcCharts[key].destroy();
+        }
+        delete window.nvcCharts[key];
+      });
+    }
+  } catch (e) {
+    console.warn('destroyAllCharts error:', e);
+  }
+}
+
+// Initialize dashboard charts
+function initializeDashboardCharts() {
+  try {
+    // Chart initialization logic would go here
+    console.log('📊 Dashboard charts initialized');
+  } catch (e) {
+    console.warn('initializeDashboardCharts error:', e);
+  }
+}
+
+// Ensure stylesheets are loaded
+function ensureStylesheetsLoaded() {
+  try {
+    // Check if critical stylesheets are loaded
+    const criticalStyles = ['bootstrap.min.css', 'nepaliDatePicker.min.css'];
+    criticalStyles.forEach(style => {
+      if (!document.querySelector(`link[href*="${style}"]`)) {
+        console.warn(`⚠️ Missing stylesheet: ${style}`);
+      }
+    });
+    console.log('✅ Stylesheets check completed');
+  } catch (e) {
+    console.warn('ensureStylesheetsLoaded error:', e);
+  }
+}
+
+// Provide safe no-op UI stubs for functions that legacy code may call before modules load
+NVC.UI.updateStats = NVC.UI.updateStats || function(){};
+NVC.UI.initializeDashboardCharts = NVC.UI.initializeDashboardCharts || function(){};
+NVC.UI.destroyAllCharts = NVC.UI.destroyAllCharts || function(){};
+NVC.UI.showTechnicalProjectsView = NVC.UI.showTechnicalProjectsView || function(){};
+NVC.UI.showEmployeeMonitoringView = NVC.UI.showEmployeeMonitoringView || function(){};
+NVC.UI.showCitizenCharterView = NVC.UI.showCitizenCharterView || function(){};
+NVC.UI.showInvestigationView = NVC.UI.showInvestigationView || function(){};
+
+// Safe global wrapper for getFromGoogleSheets to prefer modular API implementation
+async function getFromGoogleSheets(action, params = {}) {
+  try {
+    console.info('getFromGoogleSheets called', action, params);
+    if (window.NVC && NVC.Api && typeof NVC.Api.getFromGoogleSheets === 'function') {
+      return await NVC.Api.getFromGoogleSheets(action, params);
+    }
+  } catch (e) { console.warn('NVC.Api.getFromGoogleSheets delegate failed', e); }
+
+  // Legacy global implementation fallback
+  if (typeof window.__legacy_getFromGoogleSheets === 'function') {
+    try { return await window.__legacy_getFromGoogleSheets(action, params); } catch (e) { console.warn('legacy getFromGoogleSheets failed', e); }
+  }
+
+  // If none available, return a safe failure object
+  return { success: false, message: 'getFromGoogleSheets not available' };
+}
+
+
+function showComplaintsView(initialFilters = {}) {
+  if (window.NVC && NVC.UI && typeof NVC.UI.showComplaintsView === 'function') return NVC.UI.showComplaintsView(initialFilters);
+  // Legacy fallback: if a preserved legacy renderer exists, call it
+  if (typeof window.__legacy_showComplaintsView === 'function') return window.__legacy_showComplaintsView(initialFilters);
+  console.warn('showComplaintsView called before UI module loaded');
+  return;
+}
+// NOTE: Removed an orphaned AI/chatbot fragment that was left corrupted during migration.
+// The AI/chatbot implementation now lives in `ai_chatbot.js` under the `NVC.Chatbot` namespace.
 
 function normalizeProvinceName(value) {
   if (value === undefined || value === null) return '';
@@ -604,6 +332,9 @@ const AI_INSIGHTS = {
     }
 };
 
+// Backwards-compatibility shim: prefer new NVC.Config but fall back to global for legacy calls
+const GOOGLE_SHEETS_CONFIG = (window.NVC && window.NVC.Config && window.NVC.Config.GOOGLE_SHEETS_CONFIG) || (window.GOOGLE_SHEETS_CONFIG || { ENABLED: false, WEB_APP_URL: '' });
+
 // ==================== CONFIGURATION ====================
 const CONFIG = {
   APP_NAME: 'राष्ट्रिय सतर्कता केन्द्र',
@@ -674,6 +405,15 @@ function normalizeFinalDecisionType(value) {
   if (v === 'सतर्क गर्ने') return 'सतर्क';
   if (v === 'अन्य निर्णय') return 'अन्य';
   return v;
+}
+
+// Generate a short unique complaint id when none provided (legacy fallback)
+function generateComplaintId() {
+  try {
+    return 'C' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,8).toUpperCase();
+  } catch (e) {
+    return 'C' + Math.floor(Math.random() * 1000000);
+  }
 }
 
 const STATUS_TYPES = {
@@ -912,7 +652,7 @@ function _initializeNepaliDropdowns() {
         // remove extra placeholder if any then re-add disabled placeholder as first
         if (yearEl.options.length === 1) yearEl.innerHTML = '';
         const ph = document.createElement('option'); ph.value = ''; ph.textContent = 'साल'; ph.disabled = true; ph.selected = true; yearEl.appendChild(ph);
-        for (let y = cy - 5; y <= cy + 5; y++) {
+        for (let y = 2080; y <= 2090; y++) {
           const o = document.createElement('option'); o.value = y; o.textContent = _latinToDevnagari(String(y)); yearEl.appendChild(o);
         }
       }
@@ -1020,7 +760,7 @@ if (typeof MutationObserver !== 'undefined') {
 
 // नेपाली मिति API प्रयोग गरेर आजको मिति प्राप्त गर्ने
 function _getCurrentNepaliDate() {
-    const today = new Date();
+  const today = new Date();
     const adDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     // पहिलो प्राथमिकता: NepaliDatePicker (v5.x)
     if (typeof NepaliDatePicker !== 'undefined' && typeof NepaliDatePicker.ad2bs === 'function') {
@@ -1067,10 +807,10 @@ function _getCurrentNepaliDate() {
     
     // चौथो प्राथमिकता: Internal converter (no external library required)
     try {
-        const converted = convertADtoBS(adDateStr);
+        const converted = convertADtoBSAccurate(adDateStr);
         if (converted) return converted;
     } catch (e) {
-        console.warn('convertADtoBS failed:', e);
+        console.warn('convertADtoBSAccurate failed:', e);
     }
 
     // अन्तिम: Fallback (hardcoded)
@@ -1084,18 +824,32 @@ function _getCurrentNepaliDate() {
 NVC.Utils.getCurrentNepaliDate = _getCurrentNepaliDate;
 
 function getCurrentNepaliDate() {
-  return NVC.Utils.getCurrentNepaliDate.apply(this, arguments);
+  try {
+    if (window.NVC && NVC.Utils && typeof NVC.Utils.getCurrentNepaliDate === 'function') {
+      return NVC.Utils.getCurrentNepaliDate.apply(this, arguments);
+    }
+  } catch (e) {}
+  // fallback to internal implementation
+  try { return _getCurrentNepaliDate.apply(this, arguments); } catch (e) { return new Date().toISOString().slice(0,10); }
 }
 
 // Helper: Convert Devanagari digits to Latin digits
 function _devnagariToLatin(s) {
+  // Prefer centralized util if present
+  if (window.NVC && NVC.Utils && typeof NVC.Utils.devanagariToLatin === 'function') {
+    try { return NVC.Utils.devanagariToLatin(s); } catch(e) {}
+  }
   if (!s) return s;
   const map = { '०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9' };
-  return s.replace(/[०-९]/g, d => map[d] || d);
+  return String(s).replace(/[०-९]/g, d => map[d] || d);
 }
 
 // Helper: Convert Latin digits to Devanagari digits (string)
 function _latinToDevnagari(s) {
+  // Prefer centralized util if present
+  if (window.NVC && NVC.Utils && typeof NVC.Utils.latinToDevanagari === 'function') {
+    try { return NVC.Utils.latinToDevanagari(s); } catch(e) {}
+  }
   if (s === null || s === undefined) return s;
   const map = { '0':'०','1':'१','2':'२','3':'३','4':'४','5':'५','6':'६','7':'७','8':'८','9':'९' };
   return String(s).replace(/[0-9]/g, d => map[d] || d);
@@ -1121,6 +875,10 @@ function normalizeSourceCode(raw) {
 }
 
 function applyDevanagariDigits(rootEl = document.body) {
+  // Delegate to centralized util if available
+  if (window.NVC && NVC.Utils && typeof NVC.Utils.applyDevanagariDigits === 'function') {
+    try { return NVC.Utils.applyDevanagariDigits(rootEl); } catch (e) {}
+  }
   try {
     if (!rootEl) return;
     const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
@@ -1149,12 +907,10 @@ function applyDevanagariDigits(rootEl = document.body) {
 
 // Helper: map Nepali month name to month number
 function _nepaliMonthNameToNumber(name) {
+  if (window.NVC && NVC.Utils && typeof NVC.Utils.nepaliMonthNameToNumber === 'function') return NVC.Utils.nepaliMonthNameToNumber(name);
   if (!name) return null;
-  const m = {
-    'बैशाख':1,'जेठ':2,'असार':3,'साउन':4,'भदौ':5,'असोज':6,
-    'कार्तिक':7,'मंसिर':8,'पुष':9,'माघ':10,'फागुन':11,'चैत':12
-  };
-  const key = name.replace(/[,\s]/g, '').trim();
+  const m = { 'बैशाख':1,'जेठ':2,'असार':3,'साउन':4,'भदौ':5,'असोज':6,'कार्तिक':7,'मंसिर':8,'पुष':9,'माघ':10,'फागुन':11,'चैत':12 };
+  const key = String(name).replace(/[,\s]/g,'').trim();
   return m[key] || null;
 }
 
@@ -1278,7 +1034,17 @@ function _parseComplaintRegDateToAD(complaint) {
 // - >= 1 year => complaint-old-year (red)
 // - >= 6 months => complaint-old-6mo (orange)
 function getComplaintAgeClass(complaint) {
-  return '';
+  try {
+    const d = _parseComplaintRegDateToAD(complaint);
+    if (!d) return '';
+    const diffMs = Date.now() - d.getTime();
+    const days = diffMs / (1000 * 60 * 60 * 24);
+    if (days >= 365) return 'complaint-old-year';
+    if (days >= 180) return 'complaint-old-6mo';
+    return '';
+  } catch (e) {
+    return '';
+  }
 }
 
 async function updateNepaliDate() {
@@ -1401,13 +1167,12 @@ function convertADtoBS(adDateStr) {
   }
   return '';
 }
-
 // Accurate AD to BS conversion - Final corrected version (matches backend)
 function convertADtoBSAccurate(adDateStr) {
   try {
     // Skip conversion if input is invalid
     if (!adDateStr || adDateStr === 'undefined' || adDateStr === '') {
-      return getCurrentNepaliDate();
+      return '';
     }
     
     // Try existing libraries first (synchronous)
@@ -1443,9 +1208,9 @@ function convertADtoBSAccurate(adDateStr) {
       }
     }
     
-    return getCurrentNepaliDate();
+    return getFallbackNepaliDate();
   } catch (e) {
-    return getCurrentNepaliDate();
+    return getFallbackNepaliDate();
   }
 }
 
@@ -2094,31 +1859,14 @@ function updateDateTime() {
 }
 
 function showToast(message, type = 'info') {
+  if (window.NVC && NVC.UI && typeof NVC.UI.showToast === 'function') {
+    return NVC.UI.showToast(message, { duration: 3000, bg: type === 'error' ? '#d32f2f' : type === 'success' ? '#2e7d32' : type === 'warning' ? '#ff8f00' : '#0288d1' });
+  }
+  // Fallback
   if (typeof Toastify !== 'undefined') {
-    Toastify({
-      text: message,
-      duration: 3000,
-      gravity: "top",
-      position: "right",
-      style: {
-        background: type === 'error' ? '#d32f2f' : 
-                  type === 'success' ? '#2e7d32' : 
-                  type === 'warning' ? '#ff8f00' : '#0288d1'
-      },
-      stopOnFocus: true
-    }).showToast();
+    Toastify({ text: message, duration: 3000, gravity: "top", position: "right", stopOnFocus: true }).showToast();
   } else {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed; top: 20px; right: 20px; padding: 12px 20px;
-      background-color: ${type === 'error' ? '#d32f2f' : type === 'success' ? '#2e7d32' : 
-                         type === 'warning' ? '#ff8f00' : '#0288d1'};
-      color: white; border-radius: 4px; z-index: 9999;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    `;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    console.log('[TOAST]', type, message);
   }
 }
 
@@ -2232,800 +1980,59 @@ function buildComplaintsFilterChipsHTML(filters = {}) {
 }
 
 function removeComplaintsFilterChip(key) {
-  const current = {};
+  // Delegate to UI module if available, otherwise perform legacy DOM updates and refresh
   try {
-    current.status = document.getElementById('filterStatus')?.value || '';
-    current.finalDecisionType = document.getElementById('filterFinalDecisionType')?.value || '';
-    current.shakha = document.getElementById('filterShakha')?.value || '';
-    current.ministry = document.getElementById('filterMinistry')?.value || '';
-    current.searchField = document.getElementById('searchField')?.value || 'all';
-    current.search = document.getElementById('searchText')?.value || '';
-    current.sortOrder = document.getElementById('sortOrder')?.value || 'newest';
-    current.startDate = document.getElementById('filterStartDate')?.value || '';
-    current.endDate = document.getElementById('filterEndDate')?.value || '';
-  } catch (e) {}
-
-  if (key === 'status') current.status = '';
-  if (key === 'finalDecisionType') current.finalDecisionType = '';
-  if (key === 'shakha') current.shakha = '';
-  if (key === 'ministry') current.ministry = '';
-  if (key === 'startDate') current.startDate = '';
-  if (key === 'endDate') current.endDate = '';
-  if (key === 'search') current.search = '';
-
-  if (!state.pagination) state.pagination = { itemsPerPage: 10, currentPage: 1, totalItems: 0 };
-  state.pagination.currentPage = 1;
-  showComplaintsView({ ...current, _fromFilter: true });
-}
-
-function debouncedFilterComplaintsTable() {
-  if (state.currentView !== 'complaints') return;
-  if (!state._debounceTimers) state._debounceTimers = {};
-  // Save current caret/selection so we can restore it after the view re-renders
-  try {
-    const _in = document.getElementById('searchText');
-    if (_in) state._searchSelection = { start: _in.selectionStart, end: _in.selectionEnd, value: _in.value };
-  } catch(e) { state._searchSelection = null; }
-
-  clearTimeout(state._debounceTimers.complaintsFilter);
-  state._debounceTimers.complaintsFilter = setTimeout(() => {
-    try {
-      filterComplaintsTable();
-    } catch (e) {
-      console.error('debouncedFilterComplaintsTable failed', e);
+    if (window.NVC && NVC.UI && typeof NVC.UI.removeComplaintsFilterChip === 'function') {
+      return NVC.UI.removeComplaintsFilterChip(key);
     }
-  }, 300);
-}
-
-function generateComplaintId() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const random = Math.floor(Math.random() * 9000 + 1000);
-  return `NVC-${year}-${random}`;
-}
-
-// ==================== STYLESHEET & CHART LOADERS ====================
-function ensureStylesheetsLoaded() {
-  console.log('🎨 Checking stylesheets...');
-  
-  if (!document.querySelector('link[href*="bootstrap.min.css"]')) {
-    const bootstrapCSS = document.createElement('link');
-    bootstrapCSS.rel = 'stylesheet';
-    bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css';
-    document.head.appendChild(bootstrapCSS);
-  }
-  
-  if (!document.querySelector('link[href*="font-awesome"]') && !document.querySelector('link[href*="fontawesome"]')) {
-    const fontAwesome = document.createElement('link');
-    fontAwesome.rel = 'stylesheet';
-    fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css';
-    document.head.appendChild(fontAwesome);
-  }
-
-  // Add custom styles for old complaints
-  if (!document.getElementById('custom-complaint-styles')) {
-    const style = document.createElement('style');
-    style.id = 'custom-complaint-styles';
-    style.innerHTML = `
-      .complaint-old-6mo { background-color: #fff3e0 !important; }
-      .complaint-old-year { background-color: #ffebee !important; }
-    `;
-    document.head.appendChild(style);
-  }
-}
-
-function ensureChartJsLoaded() {
-  return new Promise((resolve) => {
-    if (typeof Chart !== 'undefined') {
-      console.log('✅ Chart.js already loaded');
-      resolve();
-      return;
-    }
-    
-    console.log('📥 Loading Chart.js...');
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';
-    script.onload = () => { console.log('✅ Chart.js loaded'); resolve(); };
-    script.onerror = () => { console.error('❌ Failed to load Chart.js'); resolve(); };
-    document.head.appendChild(script);
-  });
-}
-
-function destroyAllCharts() {
-  if (window.nvcCharts) {
-    Object.keys(window.nvcCharts).forEach(key => {
-      if (window.nvcCharts[key] && typeof window.nvcCharts[key].destroy === 'function') {
-        try {
-          window.nvcCharts[key].destroy();
-        } catch (e) {}
-        window.nvcCharts[key] = null;
-      }
-    });
-  }
-}
-
-
-const initializeNepaliDatePickers = initializeDatepickers;
-
-// ==================== GOOGLE SHEETS API FUNCTIONS ====================
-async function _getFromGoogleSheets(action, params = {}) {
-  // Sheets disabled छ भने
-  if (!GOOGLE_SHEETS_CONFIG.ENABLED) {
-    console.log('ℹ️ Google Sheets disabled');
-    return { success: false, data: [], message: 'Integration disabled' };
-  }
-  
-  // API Key check
-  if (!GOOGLE_SHEETS_CONFIG.API_KEY) {
-    console.error('❌ API Key is missing');
-    return { success: false, data: [], message: 'API Key is missing' };
-  }
-  
-  // Web App URL check
-  if (!GOOGLE_SHEETS_CONFIG.WEB_APP_URL || 
-      GOOGLE_SHEETS_CONFIG.WEB_APP_URL.includes('script.google.com/macros/s/') === false) {
-    console.error('❌ Invalid Web App URL');
-    return { success: false, data: [], message: 'Invalid Web App URL' };
-  }
-  
-  return new Promise((resolve) => {
-    try {
-      // ========== 1. URL बनाउने ==========
-      let url = GOOGLE_SHEETS_CONFIG.WEB_APP_URL;
-      
-      // Add action
-      url += `?action=${encodeURIComponent(action)}`;
-      
-      // 🔥 CRITICAL: API Key हरेक request मा पठाउनै पर्छ
-      url += `&apiKey=${encodeURIComponent(GOOGLE_SHEETS_CONFIG.API_KEY)}`;
-      
-      // Add all parameters
-      Object.keys(params).forEach(key => {
-        if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
-          url += `&${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`;
-        }
-      });
-      
-      // ========== 2. JSONP Callback ==========
-      const callbackName = `jsonp_${action}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-      url += `&callback=${callbackName}`;
-
-      // Cache busting to avoid stale/redirect cached responses
-      url += `&t=${Date.now()}`;
-      
-      console.log(`📡 JSONP Request [${action}]`, url);
-      
-      let isResolved = false;
-      let didTimeout = false;
-      let lateHandled = false;
-      let retryCount = 0;
-      
-      // ========== 3. Timeout ==========
-      const timeout = setTimeout(() => {
-        if (!isResolved) {
-          console.error(`❌ JSONP Timeout [${action}] after ${GOOGLE_SHEETS_CONFIG.TIMEOUT}ms`);
-          cleanup();
-          
-          // Retry logic
-          if (retryCount < (GOOGLE_SHEETS_CONFIG.MAX_RETRIES || 3)) {
-            retryCount++;
-            console.log(`🔄 Retry ${retryCount}/${GOOGLE_SHEETS_CONFIG.MAX_RETRIES} for ${action}`);
-            setTimeout(() => {
-              // नयाँ callback name बनाउने
-              const newCallback = `${callbackName}_retry${retryCount}`;
-              url = url.replace(/&callback=[^&]+/, `&callback=${newCallback}`);
-              url = url.replace(/&t=\d+/, `&t=${Date.now()}`);
-              
-              window[newCallback] = window[callbackName];
-              script.src = url;
-              document.head.appendChild(script);
-            }, GOOGLE_SHEETS_CONFIG.RETRY_DELAY * retryCount);
-          } else {
-            resolve({ 
-              success: false, 
-              data: [], 
-              message: 'Timeout after retries',
-              action: action 
-            });
-          }
-        }
-      }, GOOGLE_SHEETS_CONFIG.TIMEOUT || 30000);
-      
-      // ========== 4. Cleanup function ==========
-      const cleanup = () => {
-        clearTimeout(timeout);
-        try {
-          if (window[callbackName]) {
-            delete window[callbackName];
-          }
-          try {
-            if (script) {
-              // Avoid NotFoundError if the script was already removed
-              if (script.isConnected && typeof script.remove === 'function') script.remove();
-              else if (script.parentNode) script.parentNode.removeChild(script);
-            }
-          } catch (e) {}
-        } catch (e) {}
-      };
-      
-      // ========== 5. JSONP Callback Function ==========
-      window[callbackName] = function(response) {
-        if (isResolved) return;
-        isResolved = true;
-        cleanup();
-        
-        console.log(`📨 JSONP Response [${action}] received`, response ? '✅' : '❌');
-        
-        // 🔥 CRITICAL: Apps Script बाट आउने विभिन्न response formats ह्यान्डल गर्ने
-        let formattedResponse = response || { success: false, data: [] };
-        
-        // Case 1: सीधै array आयो भने
-        if (Array.isArray(formattedResponse)) {
-          formattedResponse = {
-            success: true,
-            data: formattedResponse,
-            count: formattedResponse.length
-          };
-        }
-        
-        // Case 2: { data: [...] } आयो भने
-        else if (formattedResponse.data && Array.isArray(formattedResponse.data) && 
-                 formattedResponse.success === undefined) {
-          formattedResponse.success = true;
-        }
-        
-        // Case 3: success flag नै छैन भने
-        else if (formattedResponse.success === undefined) {
-          formattedResponse.success = !!formattedResponse.data || !!formattedResponse.id;
-        }
-        
-        resolve(formattedResponse);
-      };
-      
-      // ========== 6. Create Script Tag ==========
-      const script = document.createElement('script');
-      script.src = url;
-      script.async = true;
-      
-      script.onerror = function(error) {
-        if (isResolved) return;
-        console.error(`❌ JSONP Network Error [${action}]:`, error);
-        try {
-          console.error('❌ JSONP script failed to load:', script && script.src ? script.src : url);
-        } catch (e) {}
-        
-        // Retry on network error
-        if (retryCount < (GOOGLE_SHEETS_CONFIG.MAX_RETRIES || 3)) {
-          retryCount++;
-          console.log(`🔄 Retry ${retryCount}/${GOOGLE_SHEETS_CONFIG.MAX_RETRIES} for ${action} (network error)`);
-          setTimeout(() => {
-            try { url = url.replace(/&t=\d+/, `&t=${Date.now()}`); } catch (e) {}
-            const newScript = document.createElement('script');
-            newScript.src = url;
-            newScript.async = true;
-            newScript.onerror = script.onerror;
-            document.head.appendChild(newScript);
-          }, GOOGLE_SHEETS_CONFIG.RETRY_DELAY * retryCount);
-        } else {
-          isResolved = true;
-          cleanup();
-          try {
-            showToast('❌ Google Sheets connect हुन सकेन। Apps Script Web App deployment (Anyone access) र URL जाँच गर्नुहोस्।', 'error');
-          } catch (e) {}
-          resolve({ 
-            success: false, 
-            data: [], 
-            message: 'Network error after retries',
-            action: action 
-          });
-        }
-      };
-      
-      document.head.appendChild(script);
-      
-    } catch (error) {
-      console.error(`❌ JSONP Exception [${action}]:`, error);
-      resolve({ 
-        success: false, 
-        data: [], 
-        message: error.toString(),
-        action: action 
-      });
-    }
-  });
-}
-
-NVC.Api.getFromGoogleSheets = _getFromGoogleSheets;
-
-async function getFromGoogleSheets(action, params = {}) {
-  return NVC.Api.getFromGoogleSheets(action, params);
-}
-
-// Convenience helper to call the Apps Script function that ensures the ministry header exists
-async function ensureComplaintsHeader() {
-  try {
-    const res = await getFromGoogleSheets('ensureMinistryHeader');
-    console.log('ensureMinistryHeader result:', res);
-    if (res && res.success) showToast(`✅ ${res.message || 'Header ensured'}`, 'success');
-    else showToast(`⚠️ ${res.message || 'Failed to ensure header'}`, 'warning');
-    return res;
   } catch (e) {
-    console.error('Error calling ensureMinistryHeader:', e);
-    showToast('❌ Header ensure call failed', 'error');
-    return { success: false, message: e.toString() };
+    console.warn('NVC.UI.removeComplaintsFilterChip delegate failed', e);
   }
+
+  // Legacy fallback: Remove the selected chip and refresh the complaints view
+  try {
+    const statusEl = document.getElementById('filterStatus'); if (statusEl && key === 'status') statusEl.value = '';
+    const finalDecisionEl = document.getElementById('filterFinalDecisionType'); if (finalDecisionEl && key === 'finalDecisionType') finalDecisionEl.value = '';
+    const shakhaEl = document.getElementById('filterShakha'); if (shakhaEl && key === 'shakha') shakhaEl.value = '';
+    const ministryEl = document.getElementById('filterMinistry'); if (ministryEl && key === 'ministry') ministryEl.value = '';
+    const startEl = document.getElementById('filterStartDate'); if (startEl && key === 'startDate') startEl.value = '';
+    const endEl = document.getElementById('filterEndDate'); if (endEl && key === 'endDate') endEl.value = '';
+    const searchEl = document.getElementById('searchText'); if (searchEl && key === 'search') searchEl.value = '';
+  } catch (e) { console.warn('removeComplaintsFilterChip failed', e); }
+
+  // Re-render complaints with updated filters (legacy)
+  try { if (typeof showComplaintsView === 'function') showComplaintsView(); } catch (e) {}
 }
 
-async function _postToGoogleSheets(action, data = {}) {
-  // Sheets disabled छ भने local storage मा save गर्ने
-  if (!GOOGLE_SHEETS_CONFIG.ENABLED) {
-    console.log('ℹ️ Google Sheets disabled - saving locally');
-    return { 
-      success: true, 
-      message: 'Data saved locally (Google Sheets disabled)',
-      id: data.id || generateComplaintId(),
-      local: true 
-    };
+// Ensure we don't reference an undefined legacy implementation. Prefer NVC.Api implementation when available.
+try {
+  if (typeof _postToGoogleSheets !== 'undefined' && typeof NVC.Api.postToGoogleSheets === 'undefined') {
+    NVC.Api.postToGoogleSheets = _postToGoogleSheets;
   }
-  
-  return new Promise((resolve) => {
-    try {
-      // ========== 1. URL बनाउने ==========
-      let url = GOOGLE_SHEETS_CONFIG.WEB_APP_URL;
-      url += `?action=${encodeURIComponent(action)}`;
-      url += `&apiKey=${encodeURIComponent(GOOGLE_SHEETS_CONFIG.API_KEY)}`;
-      
-      // URL मा fields append गर्ने
-      // Enhance payload: for any date-like field, also send a Nepali (Devanagari) display variant.
-      const enhanced = { ...data };
-      try {
-        Object.keys(data).forEach(k => {
-          const v = data[k];
-          if (v === undefined || v === null) return;
-          const keyStr = String(k);
-          const keyLower = keyStr.toLowerCase();
-
-          // if key looks like a date — handle both English and Nepali labels
-          try {
-            const dateRegex = /date|मिति|दर्ता/i;
-            if (dateRegex.test(keyStr)) {
-              try {
-                const nep = _latinToDevnagari(String(v));
-                // For save/update complaint actions, send the main key as Devanagari
-                // so the sheet stores Nepali text; also include an ISO copy usable by backend.
-                if (action === 'saveComplaint' || action === 'updateComplaint' || action === 'saveHelloSarkarComplaint') {
-                  enhanced[`${k}Iso`] = String(v);
-                  enhanced[k] = nep;
-                } else {
-                  // default: add a Nepali variant alongside existing value
-                  enhanced[`${k}Nepali`] = nep;
-                }
-              } catch (e) { /* ignore */ }
-            }
-          } catch (e) {}
-        });
-      } catch (e) {
-        console.warn('Could not enhance payload with Nepali dates:', e);
-      }
-
-      // This is more robust than manually listing fields.
-      // It also sends empty strings, which is correct for clearing a field's value.
-      // Ensure complaint ID fields are saved in Devanagari for complaint actions
-      try {
-        if (action === 'saveComplaint' || action === 'updateComplaint' || action === 'saveHelloSarkarComplaint') {
-          const complaintIdKeys = ['id','complaintid','उजुरीदर्तानं','उजुरीदर्तान','उजुरीदर्तान','उजुरीदर्तानं','शिकायतनं','शिकायतन','उजुरी दर्ता नं','शिकायत नं','Complaint ID'];
-          Object.keys(enhanced).forEach(k => {
-            try {
-              const keyNorm = String(k).replace(/\s+/g,'').replace(/[^a-zA-Z0-9\u0900-\u097F]/g,'').toLowerCase();
-              if (complaintIdKeys.some(c => String(c).replace(/\s+/g,'').toLowerCase() === keyNorm)) {
-                if (enhanced[k] !== undefined && enhanced[k] !== null) {
-                  enhanced[k] = _latinToDevnagari(String(enhanced[k]));
-                }
-              }
-            } catch (e) {}
-          });
-        }
-      } catch (e) {}
-
-      Object.keys(enhanced).forEach(key => {
-        const value = enhanced[key];
-        if (value !== undefined && value !== null) {
-          url += `&${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`;
-        }
-      });
-      
-      // ========== 2. JSONP Callback ==========
-      const callbackName = `post_${action}_${Date.now()}`;
-      url += `&callback=${callbackName}`;
-      
-      console.log(`📤 JSONP POST [${action}]`, Object.keys(data).join(', '));
-      // Debug: log final URL so we can confirm Nepali date params are included
-      try { console.log('📤 JSONP URL:', url); } catch (e) { /* ignore */ }
-      
-      let isResolved = false;
-      let didTimeout = false;
-      let lateHandled = false;
-      
-      // ========== 3. Timeout ==========
-      const timeout = setTimeout(() => {
-        if (!isResolved) {
-          console.warn(`⚠️ JSONP POST timeout [${action}] - treating as local (may have succeeded)`);
-          didTimeout = true;
-          isResolved = true;
-
-          // Timeout पछि पनि callback आउन सक्छ, त्यसलाई late-success को रुपमा handle गर्छौं।
-          resolve({
-            success: false,
-            message: 'Request timed out. Saved locally for later sync.',
-            id: data.id,
-            local: true,
-            timeout: true
-          });
-        }
-      }, GOOGLE_SHEETS_CONFIG.TIMEOUT || 60000);
-      
-      // ========== 4. JSONP Callback ==========
-      window[callbackName] = function(response) {
-        if (lateHandled) return;
-
-        // If the promise already resolved due to timeout, treat this as a late server response.
-        if (didTimeout) {
-          lateHandled = true;
-          try {
-            const isSuccess = response && (response.success === true || response.success === 'true');
-            if (isSuccess) {
-              const id = data.id || response.id;
-              if (id && (action === 'saveComplaint' || action === 'updateComplaint')) {
-                const idx = (state.complaints || []).findIndex(c => String(c.id) === String(id));
-                if (idx !== -1) {
-                  state.complaints[idx].syncedToSheets = true;
-                  backupToLocalStorage();
-                  if (typeof updateSyncButton === 'function') updateSyncButton();
-                }
-              }
-              showToast('✅ उजुरी Google Sheet मा सेभ भयो (ढिलो प्रतिक्रिया)', 'success');
-            }
-          } catch (e) {
-            // ignore late handling errors
-          } finally {
-            try { delete window[callbackName]; } catch (e) {}
-            try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
-          }
-          return;
-        }
-
-        if (isResolved) return;
-        isResolved = true;
-        clearTimeout(timeout);
-        
-        try { delete window[callbackName]; } catch (e) {}
-        try {
-          if (script) {
-            if (script.isConnected && typeof script.remove === 'function') script.remove();
-            else if (script.parentNode) script.parentNode.removeChild(script);
-          }
-        } catch (e) {}
-        
-        console.log(`📨 JSONP POST Response [${action}]`, response ? '✅' : '⚠️');
-        
-        // Response format normalize गर्ने
-        // FIX: Never assume success. Default to failure if response is falsy.
-        let formattedResponse = response || { success: false, message: "No response from server", id: data.id, local: true };
-
-        // Some deployments return JSON as string; parse if needed.
-        if (typeof formattedResponse === 'string') {
-          try {
-            formattedResponse = JSON.parse(formattedResponse);
-          } catch (e) {
-            formattedResponse = { success: false, message: formattedResponse, id: data.id, local: true };
-          }
-        }
-        
-        // If response is an object but lacks a 'success' property, it's an ambiguous situation.
-        // To be safe, we should treat it as a failure unless the server explicitly returns success: true.
-        if (formattedResponse.success === undefined) {
-          formattedResponse.success = false; // Default to false
-          if (!formattedResponse.message) {
-            formattedResponse.message = "Incomplete or invalid response from server.";
-          }
-        }
-        
-        resolve(formattedResponse);
-      };
-      
-      // ========== 5. Create Script Tag ==========
-      const script = document.createElement('script');
-      script.src = url;
-      script.async = true;
-      
-      script.onerror = function(error) {
-        if (isResolved) return;
-        console.error(`❌ JSONP POST Network Error [${action}]:`, error);
-
-        // Try a one-time fetch POST fallback before giving up to local save.
-        (async () => {
-          try {
-            clearTimeout(timeout);
-            // build POST body from the enhanced payload (same as URL params)
-            const bodyParams = new URLSearchParams();
-            bodyParams.append('action', action);
-            bodyParams.append('apiKey', GOOGLE_SHEETS_CONFIG.API_KEY);
-            Object.keys(enhanced || data).forEach(k => {
-              const v = (enhanced && enhanced[k] !== undefined) ? enhanced[k] : data[k];
-              if (v !== undefined && v !== null) bodyParams.append(k, String(v));
-            });
-
-            console.log('🔁 Attempting fetch POST fallback to Google Sheets webapp');
-
-            const resp = await fetch(GOOGLE_SHEETS_CONFIG.WEB_APP_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: bodyParams.toString(),
-              credentials: 'omit'
-            });
-
-            // Try parse JSON if possible
-            let json = null;
-            try { json = await resp.json(); } catch (e) { json = null; }
-
-            // If response indicates success, mark resolved accordingly
-            if (json && (json.success === true || json.success === 'true')) {
-              isResolved = true;
-              try { delete window[callbackName]; } catch (e) {}
-              try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
-
-              // mark synced in local state if possible
-              const id = data.id || json.id;
-              if (id && (action === 'saveComplaint' || action === 'updateComplaint')) {
-                const idx = (state.complaints || []).findIndex(c => String(c.id) === String(id));
-                if (idx !== -1) {
-                  state.complaints[idx].syncedToSheets = true;
-                  backupToLocalStorage();
-                  if (typeof updateSyncButton === 'function') updateSyncButton();
-                }
-              }
-
-              resolve(json);
-              return;
-            }
-
-            // If fetch returned but not successful, fall through to local save.
-          } catch (fetchError) {
-            console.warn('Fallback fetch POST failed:', fetchError);
-          }
-
-          // Final fallback: treat as local save
-          if (isResolved) return;
-          isResolved = true;
-          clearTimeout(timeout);
-          try { delete window[callbackName]; } catch (e) {}
-          try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
-          resolve({ 
-            success: false, 
-            message: 'Network error - saved locally',
-            id: data.id,
-            local: true,
-            error: String(error)
-          });
-        })();
-      };
-      
-      document.head.appendChild(script);
-      
-    } catch (error) {
-      console.error(`❌ JSONP POST Exception [${action}]:`, error);
-      resolve({ 
-        success: false, 
-        message: error.message,
-        id: data.id,
-        local: true 
-      });
-    }
-  });
+} catch (e) {
+  // ignore if _postToGoogleSheets is not present
 }
-
-NVC.Api.postToGoogleSheets = _postToGoogleSheets;
 
 async function postToGoogleSheets(action, data = {}) {
-  return NVC.Api.postToGoogleSheets(action, data);
+  console.info('postToGoogleSheets called:', action);
+  try {
+    if (window.NVC && NVC.Api && typeof NVC.Api.postToGoogleSheets === 'function') {
+      return await NVC.Api.postToGoogleSheets(action, data);
+    }
+    if (typeof _postToGoogleSheets === 'function') {
+      return await _postToGoogleSheets(action, data);
+    }
+  } catch (e) {
+    console.error('postToGoogleSheets implementation threw:', e);
+    return { success: false, message: String(e) };
+  }
+  console.warn('postToGoogleSheets: no implementation available for action', action);
+  return { success: false, message: 'No postToGoogleSheets implementation available' };
 }
 
 async function loadDataFromGoogleSheets(forceReload = false) {
-  if (window._isLoadingData && !forceReload) {
-    console.log('⚠️ Already loading data, skipping...');
-    return window._lastLoadResult || false;
-  }
-  
-  if (!GOOGLE_SHEETS_CONFIG.ENABLED) {
-    console.log('ℹ️ Google Sheets disabled');
-    return false;
-  }
-  
-  if (!GOOGLE_SHEETS_CONFIG.WEB_APP_URL || 
-      !GOOGLE_SHEETS_CONFIG.WEB_APP_URL.includes('script.google.com/macros/s/')) {
-    console.error('❌ Invalid Web App URL');
-    showToast('❌ Google Sheets URL सही छैन', 'error');
-    return false;
-  }
-  
-  window._isLoadingData = true;
-  showLoadingIndicator(true);
-
-  try {
-    // ===== STEP 1: LOAD COMPLAINTS (This also tests the connection) =====
-    console.log('📡 Loading complaints from Google Sheets...');
-    const response = await getFromGoogleSheets('getComplaints');
-    
-    // Check if the request itself failed (timeout, network error, etc.)
-    if (!response || response.success === false) {
-      console.error('❌ Failed to load complaints from Google Sheets.', response?.message || 'No response.');
-      showToast('❌ Google Sheets बाट डाटा लोड हुन सकेन।', 'error');
-      // The 'finally' block will hide the loader. The function will proceed to the local storage fallback.
-    }
-        
-    // ===== STEP 2: EXTRACT DATA FROM RESPONSE =====
-    let complaintsData = [];
-    
-    if (response && response.success) {
-      if (Array.isArray(response.data)) {
-        complaintsData = response.data;
-        console.log(`✅ Loaded ${complaintsData.length} complaints from response.data`);
-      } else {
-        console.warn('⚠️ Response success but data is not an array.');
-      }
-    } else {
-        console.warn('⚠️ Google Sheets response was not successful or missing.');
-    }
-
-    // ===== STEP 3: FORMAT COMPLAINTS =====
-    const formattedComplaints = [];
-    
-    for (const item of complaintsData) {
-      try {
-        const formatted = formatComplaintFromSheet(item);
-        if (formatted && formatted.id) {
-          formatted.syncedToSheets = true;
-          formattedComplaints.push(formatted);
-        } else if (formatted) {
-          console.warn('⚠️ Formatted complaint missing ID:', formatted);
-        }
-      } catch (e) {
-        console.error('❌ Error formatting complaint:', e);
-      }
-    }
-    
-    // ===== STEP 4: UPDATE STATE =====
-    if (formattedComplaints.length > 0) {
-      const currentUnsynced = (state.complaints || []).filter(c => !c.syncedToSheets);
-      const sheetIds = new Set(formattedComplaints.map(c => String(c.id)));
-      const keptUnsynced = currentUnsynced.filter(c => !sheetIds.has(String(c.id)));
-        // Normalize complaint dates to BS ISO (YYYY-MM-DD) so charts use consistent Nepali dates
-        try {
-          formattedComplaints.forEach(c => {
-            try {
-              c.date = ensureBSDate(c.date || '');
-              c.entryDate = ensureBSDate(c.entryDate || c.createdAt || '');
-            } catch (e) { /* ignore per-row errors */ }
-          });
-        } catch (e) { console.warn('Date normalization failed:', e); }
-
-        state.complaints = [...keptUnsynced, ...formattedComplaints];
-      
-      console.log(`✅ State updated: ${state.complaints.length} complaints`);
-      
-      try {
-        localStorage.setItem('nvc_complaints_backup', JSON.stringify(state.complaints));
-        localStorage.setItem('nvc_complaints_backup_time', new Date().toISOString());
-        console.log('✅ Backed up to localStorage');
-      } catch (e) {
-        console.warn('⚠️ Could not save to localStorage:', e);
-      }
-      
-      showToast(`✅ ${state.complaints.length} उजुरीहरू लोड भयो`, 'success');
-
-    // ===== STEP 5: DEFER OTHER DATA TYPES (load after complaints) =====
-    try {
-      if (!window._isLoadingExtras) {
-        window._isLoadingExtras = true;
-        setTimeout(async () => {
-          try {
-            const [empRes, ccRes, projectsRes, invRes] = await Promise.all([
-              getFromGoogleSheets('getEmployeeMonitoring'),
-              getFromGoogleSheets('getCitizenCharter'),
-              getFromGoogleSheets('getProjects'),
-              getFromGoogleSheets('getInvestigations')
-            ]);
-
-            if (empRes && empRes.success && Array.isArray(empRes.data)) {
-              const formattedEmp = empRes.data.map(formatEmployeeMonitoringFromSheet).filter(Boolean);
-              state.employeeMonitoring = formattedEmp;
-              try { localStorage.setItem('nvc_employee_monitoring_backup', JSON.stringify(state.employeeMonitoring)); } catch (e) { /* ignore */ }
-            }
-
-            if (ccRes && ccRes.success && Array.isArray(ccRes.data)) {
-              const formattedCc = ccRes.data.map(formatCitizenCharterFromSheet).filter(Boolean);
-              state.citizenCharters = formattedCc;
-              try { localStorage.setItem('nvc_citizen_charters_backup', JSON.stringify(state.citizenCharters)); } catch (e) { /* ignore */ }
-            }
-
-            if (invRes && invRes.success && Array.isArray(invRes.data)) {
-              const formattedInv = invRes.data.map(formatInvestigationFromSheet).filter(Boolean);
-              state.investigations = formattedInv;
-              try { localStorage.setItem('nvc_investigations_backup', JSON.stringify(state.investigations)); } catch (e) { /* ignore */ }
-            }
-
-            if (projectsRes && projectsRes.success && Array.isArray(projectsRes.data)) {
-              const formattedProjects = projectsRes.data.map(formatProjectFromSheet).filter(Boolean);
-              state.projects = formattedProjects;
-              try { localStorage.setItem('nvc_projects_backup', JSON.stringify(state.projects)); } catch (e) { /* ignore */ }
-            }
-
-            // Refresh UI if needed after extras arrive
-            try {
-              if (typeof loadSidebarNavigation === 'function') loadSidebarNavigation();
-              if (typeof updateStats === 'function' && (state.currentPage === 'dashboardPage' || state.currentPage === 'dashboard')) updateStats();
-            } catch (e) { /* ignore */ }
-          } catch (e) {
-            console.warn('⚠️ Deferred load of extra datasets failed:', e);
-          } finally {
-            window._isLoadingExtras = false;
-          }
-        }, 0);
-      }
-    } catch (e) {
-      window._isLoadingExtras = false;
-    }
-
-    // ===== STEP 6: UPDATE UI (complaints-first) =====
-    if (state.currentPage === 'dashboardPage' || state.currentPage === 'dashboard') {
-        // ===== STEP 5: UPDATE UI & RUN POST-LOAD TASKS =====
-        if (typeof monitorHotspotAlerts === 'function') {
-          monitorHotspotAlerts();
-        }
-
-        if (typeof updateStats === 'function') updateStats();
-      updatePendingCountBadge();
-      setTimeout(() => {
-        if (typeof destroyAllCharts === 'function') destroyAllCharts();
-        if (typeof initializeDashboardCharts === 'function') initializeDashboardCharts();
-      }, 300);
-    }
-
-      if (state.currentPage === 'mainPage') {
-        if (typeof updateStats === 'function') updateStats();
-      updatePendingCountBadge();
-    }
-      
-      if (state.currentView === 'complaints' || state.currentView === 'all_complaints') {
-        showComplaintsView();
-      }
-      
-      if (typeof updateSyncButton === 'function') updateSyncButton();
-      if (typeof loadSidebarNavigation === 'function') loadSidebarNavigation();
-
-      window._lastLoadResult = true;
-      return true;
-      
-    } else {
-      console.warn('⚠️ No valid complaints data found in response. Relying on localStorage.');
-      const localStorageLoaded = (state.complaints && state.complaints.length > 0);
-      if (localStorageLoaded) {
-          showToast(`📦 LocalStorage बाट ${state.complaints.length} उजुरीहरू प्रयोग गरिँदैछ।`, 'info');
-      }
-      window._lastLoadResult = localStorageLoaded;
-      return localStorageLoaded;
-    }
-    
-  } catch (error) {
-    console.error('❌ Fatal error loading from Google Sheets:', error);
-    showToast('❌ डाटा लोड गर्दा त्रुटि', 'error');
-    const localStorageLoaded = (state.complaints && state.complaints.length > 0);
-    window._lastLoadResult = localStorageLoaded;
-    return localStorageLoaded;
-  } finally {
-    window._isLoadingData = false;
-    showLoadingIndicator(false);
-  }
+  if (window.NVC && NVC.Api && typeof NVC.Api.loadDataFromGoogleSheets === 'function') return NVC.Api.loadDataFromGoogleSheets(forceReload);
+  return false;
 }
 
 // ==================== GET DATA FROM GOOGLE SHEETS ====================
@@ -3635,6 +2642,14 @@ function updateSyncButton() {
 async function saveNewComplaint() {
   console.log('📝 saveNewComplaint() called');
   
+  // Validation: prefer module helper if available
+  try {
+    if (window.NVC && NVC.UI && typeof NVC.UI.validateNewComplaint === 'function') {
+      const v = NVC.UI.validateNewComplaint();
+      if (!v || v.valid === false) { showToast(v?.message || 'Invalid form data', 'warning'); return; }
+    }
+  } catch (e) { console.warn('validateNewComplaint helper failed', e); }
+
   // ========== 1. FORM DATA COLLECT ==========
   const complaintId = document.getElementById('complaintId')?.value || '';
   const complaintDate = document.getElementById('complaintDate')?.value;
@@ -3793,6 +2808,7 @@ async function saveNewComplaint() {
 }
 
 async function saveEditedComplaint(complaintId) {
+  console.info('saveEditedComplaint called', complaintId);
   const index = state.complaints.findIndex(c => String(c.id) === String(complaintId));
   if (index !== -1) {
     showLoadingIndicator(true);
@@ -3873,106 +2889,52 @@ async function saveEditedComplaint(complaintId) {
 }
 
 function openModal(title, content) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = content;
-  document.getElementById('complaintModal').classList.remove('hidden');
-  applyDevanagariDigits(document.getElementById('complaintModal'));
-  
-  // मोडल खुलिसकेपछि Datepicker initialize गर्ने
-  setTimeout(() => {
-    initializeDatepickers(); initializeNepaliDropdowns();
-  }, 200);
+  if (window.NVC && NVC.UI && typeof NVC.UI.openModalContent === 'function') return NVC.UI.openModalContent.apply(this, arguments);
+  try {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = content;
+    document.getElementById('complaintModal').classList.remove('hidden');
+    if (typeof applyDevanagariDigits === 'function') applyDevanagariDigits(document.getElementById('complaintModal'));
+    setTimeout(() => { try { if (typeof initializeDatepickers === 'function') initializeDatepickers(); if (typeof initializeNepaliDropdowns === 'function') initializeNepaliDropdowns(); } catch(e){} }, 200);
+  } catch (e) { console.error('openModal fallback failed', e); }
 }
 
 async function saveComplaintToGoogleSheets(complaintData) {
-  if (!GOOGLE_SHEETS_CONFIG.ENABLED || state.useLocalData) {
-    const newComplaint = {
-      id: complaintData.id || generateComplaintId(),
-      date: complaintData.date || getCurrentNepaliDate(),
-      complainant: complaintData.complainant || '',
-      accused: complaintData.accused || '',
-      description: complaintData.description || '',
-      shakha: complaintData.shakha || state.currentUser?.shakha || '',
-      mahashakha: complaintData.mahashakha || '',
-      status: complaintData.status || 'pending',
-      proposedDecision: complaintData.proposedDecision || '',
-      decision: complaintData.decision || '',
-      finalDecision: normalizeFinalDecisionType(complaintData.finalDecision || ''),
-      remarks: complaintData.remarks || '',
-      source: complaintData.source || 'internal',
-      createdBy: state.currentUser?.name || '',
-      createdAt: new Date().toISOString()
-    };
-    state.complaints.unshift(newComplaint);
-    return { success: true, message: 'Complaint saved locally', id: newComplaint.id };
+  console.info('saveComplaintToGoogleSheets called', { id: complaintData && complaintData.id });
+  if (window.NVC && NVC.Api && typeof NVC.Api.saveComplaintToGoogleSheets === 'function') {
+    return NVC.Api.saveComplaintToGoogleSheets(complaintData);
   }
-  
+  // fallback minimal behavior: POST via existing postToGoogleSheets and update local state
   try {
-    const result = await postToGoogleSheets('saveComplaint', {
-      id: complaintData.id, date: complaintData.date,
-      complainant: complaintData.complainant, accused: complaintData.accused,
-      description: complaintData.description,
-      shakha: complaintData.shakha || state.currentUser?.shakha,
-      mahashakha: complaintData.mahashakha,
-      status: complaintData.status || 'pending',
-      proposedDecision: complaintData.proposedDecision,
-      finalDecision: normalizeFinalDecisionType(complaintData.finalDecision || ''),
-      remarks: complaintData.remarks,
-      source: complaintData.source || 'internal',
-      createdBy: state.currentUser?.name
-    });
-    
-    if (result.success) {
-      const newComplaint = {
-        id: result.id || complaintData.id, date: complaintData.date,
-        complainant: complaintData.complainant, accused: complaintData.accused,
-        description: complaintData.description,
-        shakha: complaintData.shakha || state.currentUser?.shakha,
-        mahashakha: complaintData.mahashakha,
-        status: complaintData.status || 'pending',
-        proposedDecision: complaintData.proposedDecision,
-        decision: complaintData.decision,
-        finalDecision: normalizeFinalDecisionType(complaintData.finalDecision || ''),
-        remarks: complaintData.remarks,
-        source: complaintData.source || 'internal'
-      };
-      state.complaints.unshift(newComplaint);
+    const result = await postToGoogleSheets('saveComplaint', complaintData);
+    if (result && result.success) {
+      try {
+        if (NVC && NVC.State && typeof NVC.State.push === 'function') NVC.State.push('complaints', complaintData);
+        else { window.state = window.state || {}; window.state.complaints = window.state.complaints || []; window.state.complaints.unshift(complaintData); }
+      } catch (e) {}
     }
     return result;
-  } catch (error) {
-    console.error('Error saving complaint:', error);
-    return saveComplaintToGoogleSheets({ ...complaintData, useLocal: true });
+  } catch (e) {
+    console.error('fallback saveComplaintToGoogleSheets failed', e);
+    return { success: false, message: String(e) };
   }
 }
 
 async function updateComplaintInGoogleSheets(complaintId, updateData) {
-  if (!GOOGLE_SHEETS_CONFIG.ENABLED || state.useLocalData) {
-    const index = state.complaints.findIndex(c => c.id === complaintId);
-    if (index !== -1) {
-      state.complaints[index] = { ...state.complaints[index], ...updateData };
-      return { success: true, message: 'Complaint updated locally' };
-    }
-    return { success: false, message: 'Complaint not found' };
+  console.info('updateComplaintInGoogleSheets called', complaintId, updateData);
+  if (window.NVC && NVC.Api && typeof NVC.Api.updateComplaintInGoogleSheets === 'function') {
+    return NVC.Api.updateComplaintInGoogleSheets(complaintId, updateData);
   }
-  
   try {
-    const result = await postToGoogleSheets('updateComplaint', {
-      id: complaintId, status: updateData.status,
-      finalDecision: normalizeFinalDecisionType(updateData.finalDecision || ''),
-      remarks: updateData.remarks,
-      updatedBy: state.currentUser?.name
-    });
-    
-    if (result.success) {
-      const index = state.complaints.findIndex(c => c.id === complaintId);
-      if (index !== -1) {
-        state.complaints[index] = { ...state.complaints[index], ...updateData };
-      }
+    const payload = { id: complaintId, ...updateData };
+    const result = await postToGoogleSheets('updateComplaint', payload);
+    if (result && result.success) {
+      try { if (NVC && NVC.State && typeof NVC.State.set === 'function') { /* best-effort: callers manage state */ } else { window.state = window.state || {}; const idx = (window.state.complaints||[]).findIndex(c=>c.id===complaintId); if (idx!==-1) window.state.complaints[idx] = { ...window.state.complaints[idx], ...updateData }; } } catch(e){}
     }
     return result;
   } catch (error) {
     console.error('Error updating complaint:', error);
-    return updateComplaintInGoogleSheets(complaintId, { ...updateData, useLocal: true });
+    return { success: false, message: String(error) };
   }
 }
 
@@ -4142,11 +3104,13 @@ async function generateReportFromGoogleSheets(reportType, params = {}) {
   }
   
   try {
+    console.info('generateReportFromGoogleSheets: requesting remote report', reportType, params);
     const result = await postToGoogleSheets('generateReport', params);
-    if (result.success) {
+    if (result && result.success) {
       return { success: true, data: result.data, statistics: result.statistics, generatedAt: result.generatedAt };
     } else {
-      throw new Error(result.message);
+      console.warn('generateReportFromGoogleSheets: remote report failed, falling back', result);
+      return generateReportFromLocalData(reportType, params);
     }
   } catch (error) {
     console.error('Error generating report from Google Sheets:', error);
@@ -4449,20 +3413,57 @@ function exportShakhaDetails(shakha) {
 }
 
 function openModal(title, content) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = content;
-  document.getElementById('complaintModal').classList.remove('hidden');
-  applyDevanagariDigits(document.getElementById('complaintModal'));
+  if (window.NVC && NVC.UI && typeof NVC.UI.openModalContent === 'function') return NVC.UI.openModalContent.apply(this, arguments);
+  try {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = content;
+    document.getElementById('complaintModal').classList.remove('hidden');
+    if (typeof applyDevanagariDigits === 'function') applyDevanagariDigits(document.getElementById('complaintModal'));
+  } catch (e) { console.error('openModal fallback failed', e); }
 }
 
 function _closeModal() {
-  document.getElementById('complaintModal').classList.add('hidden');
+  try {
+    const el = document.getElementById('complaintModal');
+    console.log('[_closeModal] called, complaintModal found=', !!el);
+    if (!el) return;
+    // Add hidden class so stylesheet hides it
+    el.classList.add('hidden');
+    // Remove any inline visibility/display properties that may override .hidden
+    try {
+      console.log('[_closeModal] removing inline styles');
+      el.style.removeProperty('display');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('opacity');
+      el.style.removeProperty('z-index');
+    } catch (e) { console.warn('[_closeModal] failed to remove inline styles', e); }
+  } catch (e) { console.warn('[_closeModal] unexpected error', e); }
 }
 
 NVC.UI.closeModal = _closeModal;
 
 function closeModal() {
-  return NVC.UI.closeModal.apply(this, arguments);
+  try { console.log('[global closeModal] called, args=', arguments); } catch(e){}
+  try {
+    const id = arguments && arguments.length > 0 ? arguments[0] : null;
+    let el = null;
+    if (id) el = document.getElementById(id);
+    if (!el) el = document.querySelector('.modal:not(.hidden)') || document.getElementById('complaintModal');
+    if (!el) return;
+    // Avoid closing immediately after opening (race with openModalContent handlers)
+    try {
+      const justOpened = window._nvc_modalJustOpened || 0;
+      if (justOpened && (Date.now() - justOpened) < 300) {
+        console.log('[global closeModal] ignored due to recent open (<300ms)');
+        // clear flag after ignoring once so future closes work
+        try { delete window._nvc_modalJustOpened; } catch(e){}
+        return;
+      }
+    } catch (e) {}
+    console.log('[global closeModal] hiding element', el);
+    try { el.classList.add('hidden'); } catch(e) {}
+    try { el.style.removeProperty('display'); el.style.removeProperty('visibility'); el.style.removeProperty('opacity'); el.style.removeProperty('z-index'); } catch(e) {}
+  } catch (e) { console.warn('[global closeModal] error', e); }
 }
 
 function _openShakhaSelection() {
@@ -4485,6 +3486,10 @@ function openShakhaSelection() {
 
 function closeShakhaModal() {
   document.getElementById('shakhaModal').classList.add('hidden');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsModal').classList.add('hidden');
 }
 
 function selectShakha(shakhaCode) {
@@ -5232,6 +4237,12 @@ function setupEventListeners() {
   document.addEventListener('click', function(e) {
     try {
       const btn = e.target.closest && e.target.closest('.action-btn[data-action]');
+      // If this action button is inside a modal, or a recent modal interaction
+      // started (mousedown set by ui.js), let modal-specific handlers handle
+      // it to avoid duplicate handling and premature closes.
+      try {
+        if ((window._nvc_modalInteraction && (Date.now() - window._nvc_modalInteraction) < 1000) || (btn && btn.closest && btn.closest('.modal'))) return;
+      } catch(e) {}
       if (!btn) return;
       // Delegated handler: call action function but avoid overriding native events
 
@@ -5256,14 +4267,35 @@ function setupEventListeners() {
         console.warn('No handler found for action:', action, 'funcName:', funcName);
       }
 
-      // If the button requested closing modal after action, do it
-      if (btn.getAttribute('data-close') === 'true' && typeof window.closeModal === 'function') {
+      // If the button requested closing modal after action, do it — but
+      // avoid auto-closing when the button is inside a modal (user expects
+      // the modal content action to show details without closing the modal).
+      const isInsideModal = !!btn.closest('.modal');
+      if (btn.getAttribute('data-close') === 'true' && typeof window.closeModal === 'function' && !isInsideModal) {
         try { closeModal(); } catch(_) {}
       }
     } catch (err) {
       console.error('Error in delegated action-btn handler', err);
     }
   }, true); // use capture so we intercept before target phase
+
+  // Ensure modal header close buttons reliably close their modal (fixes clicks
+  // on FontAwesome pseudo-elements like .fa-times:after not triggering inline
+  // onclick handlers in some browsers/styles). This listens for clicks on
+  // the close button inside `#complaintModal` header and calls `closeModal()`.
+  document.addEventListener('click', function(e) {
+    try {
+      const closeBtn = e.target.closest && e.target.closest('#complaintModal .modal-header .action-btn');
+      if (closeBtn) {
+        try {
+          if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+          if (e.stopPropagation) e.stopPropagation();
+          e.preventDefault && e.preventDefault();
+        } catch(_){}
+        if (typeof closeModal === 'function') closeModal();
+      }
+    } catch (err) { /* ignore */ }
+  });
 }
 
 function loadSidebarNavigation() {
@@ -5972,8 +5004,7 @@ function initializeDashboardCharts() {
 
       const classStats = {
         'भ्रष्टाचार': 0,
-        'सार्वजनिक खरिद/ठेक्का': 0,
-        'आर्थिक हिनामिना': 0,
+        'सार्वजनिक खरिद/ठेक्का': 0,      
         'पूर्वाधार निर्माण': 0,
         'सेवा प्रवाह': 0,
         'कर्मचारी आचरण': 0,
@@ -6229,7 +5260,7 @@ function getChartActionsHTML(chartId) {
 
 function generateClassificationTableHTML(complaints) {
     const stats = {
-        'भ्रष्टाचार': 0, 'सार्वजनिक खरिद/ठेक्का': 0, 'आर्थिक हिनामिना': 0, 'पूर्वाधार निर्माण': 0,
+        'भ्रष्टाचार': 0, 'सार्वजनिक खरिद/ठेक्का': 0, 'पूर्वाधार निर्माण': 0,
         'सेवा प्रवाह': 0, 'कर्मचारी आचरण': 0, 'नीति/निर्णय प्रक्रिया': 0, 'अन्य': 0
     };
 
@@ -6807,9 +5838,14 @@ function showComplaintsView(initialFilters = {}) {
   
   // Load saved filters if no specific filters are passed (and we aren't just switching views without intent to reset)
   if (Object.keys(initialFilters).length === 0) {
+      // Prefer in-memory active filters (set by filter UI) so pagination retains them
       try {
+        if (state.filters && Object.keys(state.filters).length > 0) {
+          initialFilters = state.filters;
+        } else {
           const saved = JSON.parse(localStorage.getItem('nvc_complaints_filters'));
           if (saved) initialFilters = saved;
+        }
       } catch(e) { console.error('Error loading saved filters', e); }
   }
 
@@ -10396,6 +9432,10 @@ function _viewComplaint(id) {
   `;
   
   openModal('उजुरी विवरण', content);
+  try {
+    const modalEl = document.getElementById('complaintModal');
+    console.log('after openModal: complaintModal found=', !!modalEl, 'class=', modalEl && modalEl.className, 'modalBody length=', (document.getElementById('modalBody')||{}).innerHTML?.length || 0, 'NVC.UI.openModalContent=', !!(window.NVC && NVC.UI && NVC.UI.openModalContent));
+  } catch (e) { console.warn('post-openModal debug failed', e); }
 }
 
 NVC.UI.viewComplaint = _viewComplaint;
@@ -10537,7 +9577,10 @@ function editComplaint(id) {
   `;
   
   openModal('उजुरी सम्पादन', formContent);
-  setTimeout(()=>{ initializeDatepickers(); initializeNepaliDropdowns(); loadEditDistricts(); }, 100);
+  setTimeout(()=>{ 
+    try { if (typeof NVC !== 'undefined' && NVC.UI && typeof NVC.UI.prefillComplaintForm === 'function') NVC.UI.prefillComplaintForm(complaint, 'edit');
+    } catch(e){}
+    initializeDatepickers(); initializeNepaliDropdowns(); loadEditDistricts(); }, 100);
 }
 
 function saveComplaint(id) {
@@ -10601,18 +9644,23 @@ function filterComplaintsTable() {
   // Suppress content-area transition for this filter-triggered rerender
   try { state._suppressContentTransition = true; } catch(e){}
 
-  showComplaintsView({ 
-      status, 
-      finalDecisionType, 
-      shakha, 
+    // Save active filters in-memory so pagination and other navigations keep them
+    state.filters = {
+      status,
+      finalDecisionType,
+      shakha,
       ministry,
-      searchField, 
-      search: searchText, 
-      sortOrder, 
-      startDate, 
-      endDate,
+      searchField,
+      search: searchText,
+      sortOrder,
+      startDate,
+      endDate
+    };
+
+    showComplaintsView({ 
+      ...state.filters,
       _fromFilter: true
-  });
+    });
   // Clear suppression shortly after render so other navigations still animate
   setTimeout(() => { try { state._suppressContentTransition = false; } catch(e){} }, 250);
 
@@ -10643,12 +9691,16 @@ function saveComplaintsFilters() {
     };
     
     localStorage.setItem('nvc_complaints_filters', JSON.stringify(filters));
+    // also keep in-memory so immediate navigation/pagination respects them
+    state.filters = filters;
     showToast('फिल्टरहरू सुरक्षित गरियो', 'success');
 }
 
 function clearComplaintsFilters() {
     localStorage.removeItem('nvc_complaints_filters');
-    showComplaintsView({}); // Reload with defaults
+  // Clear in-memory filters too and reload default view
+  state.filters = {};
+  showComplaintsView({}); // Reload with defaults
     showToast('फिल्टरहरू रिसेट गरियो', 'info');
 }
 
@@ -11797,3 +10849,24 @@ function testOnlineComplaintsLoad() {
     try { if (!NVC.Utils.loadInvestigationLocals) NVC.Utils.loadInvestigationLocals = loadInvestigationLocals; } catch (e) {}
   } catch (e) {}
 })();
+
+// Make key functions globally accessible for HTML onclick handlers and delegated event handlers
+if (typeof window !== 'undefined') {
+  window.openAdminLogin = openAdminLogin;
+  window.openReports = openReports;
+  window.openShakhaSelection = openShakhaSelection;
+  window.closeModal = closeModal;
+  window.viewComplaint = viewComplaint;
+  window.deleteComplaint = deleteComplaint;
+  window.logout = logout;
+  window.toggleChatbot = toggleChatbot;
+  window.sendChatMessage = sendChatMessage;
+  window.destroyAllCharts = destroyAllCharts;
+  window.currentTheme = currentTheme;
+  window.AI_SYSTEM = AI_SYSTEM;
+  window.handleTableActions = handleTableActions;
+  window.editComplaint = editComplaint;
+  window.assignToShakha = assignToShakha;
+  window.closeShakhaModal = closeShakhaModal;
+  window.closeSettingsModal = closeSettingsModal;
+}

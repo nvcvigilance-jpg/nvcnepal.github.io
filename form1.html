@@ -369,7 +369,7 @@
     </style>
 </head>
 <body>
-    <form action="https://docs.google.com/forms/d/11HrvEvu8tLUSRGzaPUhl4dLwmERuoDB69NMvqkBbqgk/formResponse" method="POST"></form>
+<form action="https://docs.google.com/forms/d/11HrvEvu8tLUSRGzaPUhl4dLwmERuoDB69NMvqkBbqgk/formResponse" method="POST">
     <div class="container">
         <!-- Government Header with Coat of Arms -->
         <div class="header">
@@ -383,7 +383,7 @@
         <!-- Main Card -->
         <div class="card">
             <!-- Complaint Form -->
-            <form id="complaintForm">
+            
                 <!-- उजुरकर्ताको नाम र ठेगाना -->
                 <div class="form-group">
                     <label><i class="fas fa-user"></i> उजुरकर्ता</label>
@@ -417,7 +417,7 @@
                     <i class="fas fa-check-circle"></i>
                     <span>उजुरी सफलतापूर्वक दर्ता भयो! धन्यवाद।</span>
                 </div>
-            </form>
+            
 
             <!-- Status Check Section -->
             <div class="status-section">
@@ -453,59 +453,17 @@
             <p>नेपाल सरकार | राष्ट्रिय सतर्कता केन्द्र</p>
         </div>
     </div>
-
-    <script>
-        // Form submit handler
-        document.getElementById('complaintForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const successMsg = document.getElementById('registerSuccess');
-            successMsg.classList.add('show');
-            
-            // Reset form after success
-            this.reset();
-            
-            setTimeout(() => {
-                successMsg.classList.remove('show');
-            }, 4000);
-        });
-
-        // Status check handler
-        document.getElementById('checkStatusBtn').addEventListener('click', function() {
-            const searchValue = document.getElementById('searchComplaint').value;
-            
-            if(searchValue.trim() === '') {
-                alert('कृपया उजुरी दर्ता नं. टाइप गर्नुहोस्');
-                return;
-            }
-
-            const statusDisplay = document.getElementById('statusDisplay');
-            statusDisplay.classList.add('active');
-
-            document.getElementById('complaintTitle').textContent = `उजुरी नं: ${searchValue}`;
-            
-            // Random status for demo
-            const statuses = ['pending', 'progress', 'resolved'];
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            
-            const badge = document.getElementById('statusBadge');
-            badge.className = 'status-badge';
-            
-            if(randomStatus === 'pending') {
-                badge.classList.add('pending');
-                badge.textContent = 'छानविन भैरहेको';
-                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी दर्ता भई छानविनको अवस्थामा छ।';
-            } else if(randomStatus === 'progress') {
-                badge.classList.add('progress');
-                badge.textContent = 'प्रक्रियामा';
-                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरी उपर छानविन भइरहेको छ।';
-            } else {
-                badge.classList.add('resolved');
-                badge.textContent = 'समाधान भयो';
-                document.getElementById('complaintDesc').textContent = 'तपाईंको उजुरीको फछ्र्यौट भइसकेको छ।';
-            }
-        });
-    </script>
-    </form>
+    
+    
+        <script>
+            document.addEventListener('DOMContentLoaded', function(){
+                try {
+                    if (window.NVC && NVC.UI && typeof NVC.UI.setupComplaintForm === 'function') {
+                        NVC.UI.setupComplaintForm();
+                    }
+                } catch(e) { console.error('setupComplaintForm call failed', e); }
+            });
+        </script>
+  </form>
 </body>
 </html>

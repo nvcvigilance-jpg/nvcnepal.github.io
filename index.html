@@ -312,6 +312,9 @@
                 
                 <div class="login-footer">
                     <p class="text-xs text-muted">उजुरी व्यवस्थापन प्रणाली</p>
+                    <button type="button" class="btn btn-link btn-sm text-muted" onclick="showPage('mainPage')" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                        <i class="fas fa-home"></i> गृहपृष्ठ
+                    </button>
                 </div>
             </div>
         </div>
@@ -462,7 +465,7 @@
                     <span class="text-xs opacity-80">अनलाइन</span>
                 </div>
             </div>
-            <i class="fas fa-times pointer" onclick="toggleChatbot()"></i>
+            <i class="fas fa-times pointer" onclick="toggleChatbot()">×</i>
         </div>
         <div class="chat-body" id="chatBody">
             <div class="chat-message chat-bot-msg">नमस्ते! म राष्ट्रिय सतर्कता केन्द्रको AI सहायक हुँ। म तपाईंलाई कसरी सहयोग गर्न सक्छु?</div>
@@ -499,6 +502,14 @@
 </script>
 
 <script src="script.js"></script>
+<!-- Modularized (progressive): keep loading original script.js for now, then override/augment with modules -->
+<script src="config.js"></script>
+<script src="utils.js"></script>
+<script src="state.js"></script>
+<script src="api.js"></script>
+<script src="ai_chatbot.js"></script>
+<script src="ui.js"></script>
+<script src="main.js"></script>
 
 <script>
     // Settings Functionality

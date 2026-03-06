@@ -152,10 +152,10 @@
         </div>
         
         <div class="form-actions">
-            <button type="button" class="btn btn-primary" onclick="saveDashboardEdit()">
+            <button type="button" class="btn btn-primary" onclick="(window.NVC&&NVC.UI&&typeof NVC.UI.saveDashboardEdit==='function')?NVC.UI.saveDashboardEdit():saveDashboardEdit()">
                 <i class="fas fa-save"></i> सुरक्ष गर्नुहोस्
             </button>
-            <button type="button" class="btn btn-secondary" onclick="cancelDashboardEdit()">
+            <button type="button" class="btn btn-secondary" onclick="(window.NVC&&NVC.UI&&typeof NVC.UI.cancelDashboardEdit==='function')?NVC.UI.cancelDashboardEdit():cancelDashboardEdit()">
                 <i class="fas fa-times"></i> रद्द गर्नुहोस्
             </button>
         </div>

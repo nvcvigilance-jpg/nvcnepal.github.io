@@ -878,11 +878,11 @@
         .filter-bar {
             background: white;
             border-radius: var(--radius-lg);
-            padding: 0.8rem;
-            margin-bottom: 1.2rem;
+            padding: 0.45rem 0.6rem; /* reduced vertical padding for compactness */
+            margin-bottom: 0.8rem;
             display: flex;
             align-items: center;
-            gap: 0.8rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--gray-200);
@@ -891,39 +891,40 @@
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.25rem;
         }
 
         .filter-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--gray-600);
             white-space: nowrap;
+            margin-bottom: 0; /* avoid extra vertical gaps */
         }
 
         .filter-chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.35rem;
+            gap: 0.25rem;
             align-items: center;
         }
 
         .filter-chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            padding: 0.24rem 0.45rem;
+            gap: 0.25rem;
+            padding: 0.14rem 0.35rem;
             border-radius: 999px;
             background: rgba(13, 71, 161, 0.08);
             color: var(--primary);
             border: 1px solid rgba(13, 71, 161, 0.12);
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             line-height: 1;
             user-select: none;
         }
 
         .filter-chip .chip-remove {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -937,6 +938,14 @@
 
         .filter-chip .chip-remove:hover {
             background: rgba(13, 71, 161, 0.18);
+        }
+
+        /* Target inputs inside filter-bar to reduce height and internal padding */
+        .filter-bar .form-select,
+        .filter-bar .form-control {
+            padding: 0.28rem 0.5rem;
+            height: 34px;
+            font-size: 0.9rem;
         }
 
         .filter-chip.is-danger {
@@ -1032,6 +1041,49 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+        
+        /* Modal Close Button Fix */
+        .modal-header .action-btn {
+            background: transparent !important;
+            border: none !important;
+            color: var(--gray-600) !important;
+            cursor: pointer !important;
+            padding: 8px !important;
+            border-radius: 50% !important;
+            transition: all 0.2s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 32px !important;
+            height: 32px !important;
+            z-index: 1002 !important;
+        }
+        
+        .modal-header .action-btn:hover {
+            background: var(--gray-100) !important;
+            color: var(--gray-800) !important;
+            transform: scale(1.1) !important;
+        }
+        
+        /* FontAwesome fallback for modal close buttons */
+        .modal-header .fa-times {
+            font-size: 14px !important;
+        }
+        
+        .modal-header .fa-times:before {
+            display: none !important;
+        }
+        
+        .modal-header .fa-times:empty:before {
+            content: none !important;
+        }
+        
+        .modal-header .fa-times:empty:after {
+            content: "×" !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            color: var(--gray-600) !important;
         }
 
         .modal-body {
@@ -1723,6 +1775,43 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+        }
+        
+        .chat-header .fa-times {
+            cursor: pointer !important;
+            z-index: 1001 !important;
+            position: relative !important;
+            font-size: 18px !important;
+            padding: 5px !important;
+            border-radius: 50% !important;
+            transition: all 0.2s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 28px !important;
+            height: 28px !important;
+        }
+        
+        .chat-header .fa-times:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            transform: scale(1.1) !important;
+        }
+        
+        /* Fallback for FontAwesome not loading */
+        .chat-header .fa-times:before {
+            display: none !important;
+        }
+        
+        .chat-header .fa-times:empty:before {
+            content: none !important;
+        }
+        
+        .chat-header .fa-times:empty:after {
+            content: "X" !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+            color: white !important;
         }
 
         .chat-body {
