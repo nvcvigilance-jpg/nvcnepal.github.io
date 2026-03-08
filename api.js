@@ -80,6 +80,7 @@
           } else {
             cleanup();
             try { if (typeof NVC.UI !== 'undefined' && typeof NVC.UI.showToast === 'function') NVC.UI.showToast('❌ Google Sheets connect हुन सकेन। Apps Script Web App deployment (Anyone access) र URL जाँच गर्नुहोस्।', {bg:'#d32f2f'}); } catch (e) {}
+            console.error('❌ Google Sheets Script Load Error: Possible CORS or Permissions issue. Ensure "Who has access" is set to "Anyone". URL:', url);
             resolve({ success: false, data: [], message: 'Network error after retries', action });
           }
         };
@@ -101,6 +102,7 @@
         let url = cfg.WEB_APP_URL;
         url += `?action=${encodeURIComponent(action)}`;
         url += `&apiKey=${encodeURIComponent(cfg.API_KEY)}`;
+        url += `&t=${Date.now()}`; // Add timestamp to prevent caching
 
         const enhanced = { ...data };
         try { Object.keys(data || {}).forEach(k => { const v = data[k]; if (v === undefined || v === null) return; const keyStr = String(k); const dateRegex = /date|मिति|दर्ता/i; if (dateRegex.test(keyStr)) { try { if (typeof NVC.Utils !== 'undefined' && typeof NVC.Utils.latinToDevanagari === 'function') enhanced[k] = NVC.Utils.latinToDevanagari(String(v)); else enhanced[k] = String(v); enhanced[`${k}Iso`] = String(v); } catch (e) {} } }); } catch (e) {}
@@ -136,7 +138,9 @@
               const resp = await fetch(cfg.WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: bodyParams.toString(), credentials: 'omit' });
               let json = null; try { json = await resp.json(); } catch (e) { json = null; }
               if (json && (json.success === true || json.success === 'true')) { isResolved = true; try { delete window[callbackName]; } catch (e) {} try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {} resolve(json); return; }
-            } catch (fetchError) {}
+            } catch (fetchError) {
+              console.error('❌ Google Sheets Fallback Fetch Error:', fetchError);
+            }
             if (isResolved) return; isResolved = true; clearTimeout(timeout); try { delete window[callbackName]; } catch (e) {} try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {} resolve({ success: false, message: 'Network error - saved locally', id: data.id, local: true, error: String(error) });
           })();
         };

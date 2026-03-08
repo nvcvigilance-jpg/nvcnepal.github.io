@@ -649,30 +649,114 @@ function generateProjectId() {
 
 // Read sheet data as array of objects using header row
 function getSheetData(sheetName) {
-  const sheet = getSheet(sheetName);
-  if (!sheet) return [];
-  const lastRow = sheet.getLastRow();
-  const lastCol = sheet.getLastColumn();
-  if (lastRow < 2 || lastCol < 1) return [];
-  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
-  const headers = values[0];
-  const rows = [];
-  for (let r = 1; r < values.length; r++) {
-    const row = values[r];
-    const obj = {};
-    for (let c = 0; c < headers.length; c++) {
-      const key = headers[c] || `col_${c+1}`;
-      obj[key] = row[c] !== undefined ? row[c] : '';
-    }
-    // convenience id
-    if (!obj.id) {
-      if (obj['उजुरी दर्ता नं']) obj.id = obj['उजुरी दर्ता नं'];
-      else if (obj['project_id']) obj.id = obj['project_id'];
-    }
-    rows.push(obj);
+  // Force clear cache and flush before reading
+  try {
+    CacheService.getScriptCache().removeAll();
+    SpreadsheetApp.flush();
+  } catch (e) {
+    console.log('Cache clear error in getSheetData: ' + e.toString());
   }
-  return rows;
+  
+  const sheet = getSheet(sheetName);
+  if (!sheet) {
+    console.log('Sheet not found: ' + sheetName);
+    return [];
+  }
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    console.log('Sheet ' + sheetName + ' has no data rows');
+    return [];
+  }
+  const lastCol = sheet.getLastColumn();
+  if (lastCol < 1) {
+    console.log('Sheet ' + sheetName + ' has no columns');
+    return [];
+  }
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  
+  // Convert to objects with header mapping
+  const result = data.map(function(row) {
+    const obj = {};
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i];
+      const key = normalizeKey(header);
+      obj[key] = row[i];
+    }
+    return obj;
+  });
+  
+  console.log('getSheetData(' + sheetName + ') returned ' + result.length + ' rows');
+  return result;
 }
+
+// Authentication function
+function authenticateUser(params) {
+  const username = String(params.username || '').trim();
+  const password = String(params.password || '').trim();
+  
+  console.log('authenticateUser: username=' + username + ', password=' + password);
+  
+  // Direct sheet access without caching
+  const sheet = getSheet(CONFIG.SHEETS.USERS);
+  if (!sheet) return { success: false, message: 'Users sheet not found' };
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { success: false, message: 'No users found' };
+  
+  const lastCol = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  console.log('Headers:', headers);
+  
+  // Find username and password columns
+  const usernameColIndex = headers.findIndex(h => normalizeKey(h) === 'username');
+  const passwordColIndex = headers.findIndex(h => normalizeKey(h) === 'password');
+  
+  console.log('Column indices - username:' + usernameColIndex + ', password:' + passwordColIndex);
+  
+  if (usernameColIndex < 0 || passwordColIndex < 0) {
+    return { success: false, message: 'Username or password column not found' };
+  }
+  
+  // Get all user data
+  const userData = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  console.log('User data rows:', userData.length);
+  
+  // Search for user
+  let foundUser = null;
+  for (let i = 0; i < userData.length; i++) {
+    const row = userData[i];
+    const rowUsername = String(row[usernameColIndex] || '').trim().toLowerCase();
+    const rowPassword = String(row[passwordColIndex] || '').trim();
+    
+    console.log('Checking row ' + i + ': username=' + rowUsername + ', password=' + rowPassword);
+    
+    if (rowUsername === username.toLowerCase() && rowPassword === password) {
+      foundUser = row;
+      console.log('User found at row ' + (i + 2));
+      break;
+    }
+  }
+  
+  if (foundUser) {
+    const userObj = {};
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i];
+      const key = normalizeKey(header);
+      userObj[key] = foundUser[i] || '';
+    }
+    
+    // Remove password from response
+    delete userObj.password;
+    
+    console.log('Authentication successful for user:', userObj);
+    return { success: true, user: userObj, timestamp: new Date().getTime() };
+  } else {
+    console.log('Authentication failed for user:', username);
+    return { success: false, message: 'Invalid username or password', timestamp: new Date().getTime() };
+  }
+}
+
 
 /**
  * Helper: get created timestamp (ms) from a complaint row object
@@ -771,11 +855,36 @@ function findRowIndexById(sheet, idValue, idHeaderCandidates) {
  * - If not found: appends a new row, generating ID and timestamps when appropriate
  */
 function saveToSheet(sheetName, data, idColumn = 'उजुरी दर्ता नं') {
+  // Force clear all caches
+  try {
+    CacheService.getScriptCache().removeAll();
+    SpreadsheetApp.flush();
+  } catch (e) {
+    console.log('Cache clear error: ' + e.toString());
+  }
+  
   const sheet = getSheet(sheetName);
   if (!sheet) return { success: false, message: 'Sheet not found' };
   const lastCol = sheet.getLastColumn();
   if (lastCol < 1) return { success: false, message: 'Sheet has no headers' };
   const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  // For Users sheet, check for existing username and delete duplicates first
+  if (normalizeKey(sheetName) === normalizeKey(CONFIG.SHEETS.USERS) && data.username) {
+    const usersData = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+    const usernameColIndex = headers.findIndex(h => normalizeKey(h) === 'username');
+    if (usernameColIndex >= 0) {
+      for (let i = 0; i < usersData.length; i++) {
+        const existingUsername = String(usersData[i][usernameColIndex] || '').trim().toLowerCase();
+        const newUsername = String(data.username).trim().toLowerCase();
+        if (existingUsername === newUsername) {
+          // Delete existing row
+          sheet.deleteRow(i + 2); // +2 because data starts from row 2
+          break;
+        }
+      }
+    }
+  }
 
   // Normalize incoming data keys to their raw string forms when possible
   // AND apply PARAM_MAP to support English keys mapping to Nepali headers
@@ -965,10 +1074,13 @@ function doGet(e) {
   }
 
   try {
+    // Force cache invalidation for all requests
+    SpreadsheetApp.flush();
+    
     let response = { success: false, message: 'Unknown action' };
     switch (action) {
       case 'test':
-        response = { success: true, message: 'API Working', version: CONFIG.VERSION, sheets: CONFIG.SHEETS };
+        response = { success: true, message: 'API Working', version: CONFIG.VERSION, sheets: CONFIG.SHEETS, timestamp: new Date().getTime() };
         break;
 
       case 'getComplaints':
@@ -1107,29 +1219,38 @@ function doGet(e) {
         break;
 
       case 'getUsers':
-        // Return users without passwords
+        // Return users with passwords for authentication (but masked for display)
         const users = getSheetData(CONFIG.SHEETS.USERS).map(u => {
           const copy = {};
-          Object.keys(u).forEach(k => { if (normalizeKey(k) !== 'password') copy[k] = u[k]; });
+          Object.keys(u).forEach(k => { 
+            if (normalizeKey(k) === 'password') {
+              copy[k] = u[k]; // Include password for authentication
+            } else {
+              copy[k] = u[k];
+            }
+          });
           return copy;
         });
-        response = { success: true, data: users, count: users.length };
+        response = { success: true, data: users, count: users.length, timestamp: new Date().getTime() };
         break;
       case 'ensureMinistryHeader':
         // Add ministry header to Complaints sheet if missing
         response = ensureComplaintsMinistryHeader();
         break;
       case 'saveUser':
+        // Force refresh cache before and after save
+        SpreadsheetApp.flush();
         response = saveToSheet(CONFIG.SHEETS.USERS, params, 'username');
+        SpreadsheetApp.flush();
+        response.timestamp = new Date().getTime();
         break;
       case 'deleteUser':
         response = deleteFromSheet(CONFIG.SHEETS.USERS, params.username || params.id, 'username');
         break;
       case 'authenticateUser':
-        const allUsers = getSheetData(CONFIG.SHEETS.USERS);
-        const user = allUsers.find(u => String(u.username) === String(params.username) && String(u.password) === String(params.password));
-        if (user) { const { password, ...rest } = user; response = { success: true, user: rest }; }
-        else response = { success: false, message: 'Invalid username or password' };
+        console.log('authenticateUser called with params:', JSON.stringify(params));
+        response = authenticateUser(params);
+        console.log('authenticateUser response:', JSON.stringify(response));
         break;
 
       case 'generateReport':

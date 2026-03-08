@@ -171,7 +171,7 @@
     <div id="mainPage" class="page">
         <header class="main-header d-flex align-center justify-between">
             <div class="logo-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Emblem_of_Nepal.svg/100px-Emblem_of_Nepal.svg.png" 
+                <img src="emblem.png" 
                      alt="नेपालको निशाना छाप" class="logo" />
                 <div>
                     <h3 class="mb-1" style="color: var(--primary);">नेपाल सरकार<br>राष्ट्रिय सतर्कता केन्द्र</h3>
@@ -272,7 +272,7 @@
         <div class="login-container">
             <div class="login-card">
                 <div class="login-logo">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Emblem_of_Nepal.svg/100px-Emblem_of_Nepal.svg.png" 
+                    <img src="emblem.png" 
                          alt="नेपालको निशाना छाप" />
                     <h2 class="login-title" id="loginPageTitle">लग-इन गर्नुहोस्</h2>
                     <p class="login-subtitle" id="loginPageSubtitle">कृपया आफ्नो युजरनेम र पासवर्ड प्रविष्ट गर्नुहोस्</p>
@@ -501,15 +501,17 @@
         }
 </script>
 
-<script src="script.js"></script>
-<!-- Modularized (progressive): keep loading original script.js for now, then override/augment with modules -->
-<script src="config.js"></script>
-<script src="utils.js"></script>
-<script src="state.js"></script>
-<script src="api.js"></script>
-<script src="ai_chatbot.js"></script>
-<script src="ui.js"></script>
-<script src="main.js"></script>
+    <!-- Load config early so legacy script picks up GOOGLE_SHEETS_CONFIG -->
+    <script src="config.js"></script>
+    <!-- Load core modules first so legacy script can use their globals -->
+    <script src="utils.js"></script>
+    <script src="state.js"></script>
+    <script src="api.js"></script>
+    <script src="ai_chatbot.js"></script>
+    <script src="ui.js"></script>
+    <script src="main.js"></script>
+    <!-- Then load legacy bundle which expects globals above -->
+    <script src="script.js"></script>
 
 <script>
     // Settings Functionality

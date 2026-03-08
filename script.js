@@ -3,30 +3,36 @@ let currentTheme = 'light';
 
 // Ministries data
 const MINISTRIES = [
-  'प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालय',
-  'गृह मन्त्रालय',
-  'अर्थ मन्त्रालय',
-  'रक्षा मन्त्रालय',
-  'परराष्ट्र मन्त्रालय',
-  'शिक्षा, विज्ञान तथा प्रविधि मन्त्रालय',
-  'स्वास्थ्य तथा जनसंख्या मन्त्रालय',
-  'खानेपानी मन्त्रालय',
-  'भौतिक पूर्वाधार तथा यातायात मन्त्रालय',
-  'ऊर्जा, जलस्रोत तथा सिंचाइ मन्त्रालय',
-  'कृषि तथा पशुपंछी विकास मन्त्रालय',
-  'उद्योग, वाणिज्य तथा आपूर्ति मन्त्रालय',
-  'श्रम, रोजगार तथा सामाजिक सुरक्षा मन्त्रालय',
-  'वन तथा वातावरण मन्त्रालय',
-  'संस्कृति, पर्यटन तथा नागरिक उड्डयन मन्त्रालय',
-  'संघीय मामिला तथा सामान्य प्रशासन मन्त्रालय',
-  'भूमि व्यवस्था, सहकारी तथा गरिबी निवारण मन्त्रालय',
-  'कानून, न्याय तथा संसदीय मामिला मन्त्रालय',
-  'महिला, बालबालिका तथा ज्येष्ठ नागरिक मन्त्रालय',
-  'युवा तथा खेलकुद मन्त्रालय',
-  'सञ्चार तथा सूचना प्रविधि मन्त्रालय',
-  'सहरी विकास मन्त्रालय',
-  'स्वास्थ्य तथा जनसंख्या मन्त्रालय',
-  'अन्य'
+  "प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालय",
+  "अर्थ मन्त्रालय",
+  "उद्योग, वाणिज्य तथा आपूर्ति मन्त्रालय",
+  "ऊर्जा, जलस्रोत तथा सिंचाइ मन्त्रालय",
+  "कानून, न्याय तथा संसदीय मामिला मन्त्रालय",
+  "कृषि तथा पशुपन्छी विकास मन्त्रालय",
+  "खानेपानी मन्त्रालय",
+  "गृह मन्त्रालय",
+  "परराष्ट्र मन्त्रालय",
+  "भूमि व्यवस्था, सहकारी तथा गरिबी निवारण मन्त्रालय",
+  "भौतिक पूर्वाधार तथा यातायात मन्त्रालय",
+  "महिला, बालबालिका तथा ज्येष्ठ नागरिक मन्त्रालय",
+  "युवा तथा खेलकुद मन्त्रालय",
+  "रक्षा मन्त्रालय",
+  "वन तथा वातावरण मन्त्रालय",
+  "सङ्घीय मामिला तथा सामान्य प्रशासन मन्त्रालय",
+  "सञ्चार तथा सूचना प्रविधि मन्त्रालय",
+  "सहरी विकास मन्त्रालय",
+  "स्वास्थ्य तथा जनसङ्ख्या मन्त्रालय",
+  "संस्कृति, पर्यटन तथा नागरिक उड्डयन मन्त्रालय",
+  "शिक्षा, विज्ञान तथा प्रविधि मन्त्रालय",
+  "श्रम, रोजगार तथा सामाजिक सुरक्षा मन्त्रालय",
+  "संवैधानिक अङ्ग",
+  "कोशी प्रदेश",
+  "मधेस प्रदेश",
+  "बागमती प्रदेश",
+  "गण्डकी प्रदेश",
+  "लुम्बिनी प्रदेश",
+  "कर्णाली प्रदेश",
+  "सुदूर पश्चिम प्रदेश"
 ];
 
 // AI System for complaint analysis
@@ -236,18 +242,21 @@ const AI_INSIGHTS = {
         const currentYear = now.getFullYear();
         
         // --- 1. Trend Analysis (Current Month vs Last Month) ---
+        // Use AD-normalized dates (handles BS dates via _parseComplaintRegDateToAD)
         const thisMonthComplaints = complaints.filter(c => {
-            const d = new Date(c.entryDate || c.date);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+          const d = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+          if (!d || isNaN(d.getTime())) return false;
+          return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         });
-        
+
         let lastMonth = currentMonth - 1;
         let lastMonthYear = currentYear;
         if (lastMonth < 0) { lastMonth = 11; lastMonthYear--; }
-        
+
         const lastMonthComplaints = complaints.filter(c => {
-            const d = new Date(c.entryDate || c.date);
-            return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+          const d = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+          if (!d || isNaN(d.getTime())) return false;
+          return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
         });
 
         let trendText = "";
@@ -570,8 +579,12 @@ const state = (NVC.State.state = {
   useLocalData: false,
   previousNotificationIds: null,
   notificationFilter: 'all',
-  chatContext: null // च्याटको सन्दर्भ (context) राख्न
+  chatContext: null, // च्याटको सन्दर्भ (context) राख्न
+  projectChartFilter: { startDate: '', endDate: '' }
 });
+
+// Make state globally accessible as window.state for compatibility
+window.state = state;
 
 // ==================== GLOBAL CHART STORAGE ====================
 window.nvcCharts = {};
@@ -2198,24 +2211,31 @@ async function testGoogleSheetsConnection() {
   }
   
   try {
-    const response = await getFromGoogleSheets('test');
+    // Use NVC.Api.getFromGoogleSheets to avoid CORS preflight issues with fetch/custom headers
+    // Google Apps Script Web Apps do not support OPTIONS requests required for custom headers in fetch.
+    const data = await NVC.Api.getFromGoogleSheets('test');
     
-    if (response && response.success === true) {
-      console.log('✅ Google Sheets connection successful!', response);
+    if (data && data.success === true) {
+      console.log('✅ Google Sheets connection successful!', data);
       showToast('✅ Google Sheets connection successful!', 'success');
       
+      // Force clear any cached user data
+      if (state.users) {
+        state.users = null;
+      }
+      
       // Spreadsheet access status देखाउने
-      if (response.spreadsheetAccess) {
-        console.log('📊 Spreadsheet access:', response.spreadsheetAccess);
-        if (response.spreadsheetAccess.includes('inaccessible')) {
-          showToast('⚠️ Spreadsheet access issue: ' + response.spreadsheetAccess, 'warning');
+      if (data.spreadsheetAccess) {
+        console.log('📊 Spreadsheet access:', data.spreadsheetAccess);
+        if (data.spreadsheetAccess.includes('inaccessible')) {
+          showToast('⚠️ Spreadsheet access issue: ' + data.spreadsheetAccess, 'warning');
         }
       }
       
       return true;
     } else {
-      console.error('❌ Google Sheets connection failed:', response);
-      showToast('❌ Connection failed: ' + (response?.message || 'Unknown error'), 'error');
+      console.error('❌ Google Sheets connection failed:', data);
+      showToast('❌ Connection failed: ' + (data?.message || 'Unknown error'), 'error');
       return false;
     }
   } catch (error) {
@@ -3124,39 +3144,35 @@ function generateReportFromLocalData(reportType, params) {
   
   switch(reportType) {
     case 'monthly':
-      const currentDate = new Date();
+      // Use AD-normalized parsing so BS dates are handled correctly
+      const now = new Date();
       data = state.complaints.filter(c => {
-        const complaintDate = new Date(c.date);
-        return complaintDate.getMonth() === currentDate.getMonth() && 
-               complaintDate.getFullYear() === currentDate.getFullYear();
+        const complaintDate = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+        if (!complaintDate || isNaN(complaintDate.getTime())) return false;
+        return complaintDate.getMonth() === now.getMonth() && complaintDate.getFullYear() === now.getFullYear();
       });
       break;
     case 'shakha':
       data = params.shakha ? state.complaints.filter(c => c.shakha === params.shakha) : state.complaints;
       break;
     case 'custom':
-      // Helper to normalize date string to YYYY-MM-DD (Latin digits)
-      const getNormalizedDate = (dateStr) => {
-        if (!dateStr) return '';
-        let s = String(dateStr).trim();
-        if (typeof _devnagariToLatin === 'function') s = _devnagariToLatin(s);
-        const match = s.match(/(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})/);
-        if (match) return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
-        return s;
-      };
-
-      const start = getNormalizedDate(params.startDate);
-      const end = getNormalizedDate(params.endDate);
+      // Parse start/end to AD dates (handles BS via _parseComplaintRegDateToAD)
+      const startAD = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD({ date: params.startDate }) : null;
+      const endAD = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD({ date: params.endDate }) : null;
 
       data = state.complaints.filter(c => {
-        const cDate = getNormalizedDate(c.date || c['दर्ता मिति']);
-        if (!cDate) return false;
+        const complaintAD = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+        if (!complaintAD || isNaN(complaintAD.getTime())) return false;
 
-        let include = true;
-        if (start && end) include = include && (cDate >= start && cDate <= end);
-        if (params.status) include = include && (c.status === params.status);
-        if (params.shakha) include = include && (c.shakha === params.shakha);
-        return include;
+        if (startAD && endAD) {
+          if (complaintAD < startAD || complaintAD > endAD) return false;
+        }
+        if (params.status && c.status !== params.status) return false;
+        if (params.shakha) {
+          const cShakha = c.shakha || '';
+          if (cShakha !== params.shakha && !cShakha.includes(params.shakha)) return false;
+        }
+        return true;
       });
       break;
     case 'summary':
@@ -3206,16 +3222,14 @@ async function generateCustomReport() {
   // Helper to normalize date string to YYYY-MM-DD (Latin digits)
   const getNormalizedDate = (dateStr) => {
     if (!dateStr) return '';
+    if (typeof normalizeNepaliDisplayToISO === 'function') {
+      return normalizeNepaliDisplayToISO(dateStr);
+    }
+    // Fallback: basic conversion
     let s = String(dateStr).trim();
-    // Convert Devanagari to Latin using existing helper
-    if (typeof _devnagariToLatin === 'function') {
-        s = _devnagariToLatin(s);
-    }
-    // Extract YYYY-MM-DD if present
-    const match = s.match(/(\d{4})\-\/.\-\/./);
-    if (match) {
-      return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
-    }
+    if (typeof _devnagariToLatin === 'function') s = _devnagariToLatin(s);
+    const match = s.match(/(\d{4})[\-\/\.](\d{1,2})[\-\/\.](\d{1,2})/);
+    if (match) return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
     return s;
   };
 
@@ -3829,9 +3843,9 @@ function handleLogin() {
   
   setTimeout(async () => {
     try {
-      // Prefer Google Sheets authentication when enabled so admin-managed users can login.
+      // First try Google Sheets authentication when enabled so admin-managed users can login.
       if (GOOGLE_SHEETS_CONFIG.ENABLED) {
-        const authRes = await getFromGoogleSheets('authenticateUser', { username, password });
+        const authRes = await getFromGoogleSheets('authenticateUser', { username, password, t: Date.now() });
         if (authRes && authRes.success && authRes.user) {
           const user = authRes.user;
           const finalRole = (user.role || 'shakha').toString();
@@ -3857,56 +3871,103 @@ function handleLogin() {
             permissions
           };
 
+          window.state = state; // Ensure window.state is synced
           const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
           localStorage.setItem('nvc_session', JSON.stringify(session));
           showDashboardPage();
-        } else {
-          showToast('युजरनेम वा पासवर्ड मिलेन', 'error');
-        }
-      } else {
-        if (username === 'admin' && password === 'nvc123') {
-          state.currentUser = {
-            id: 'admin', name: 'एडमिन', role: 'admin',
-            avatar: 'A', shakha: null,
-            mahashakha: null, permissions: ['all']
-          };
-
-          const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
-          localStorage.setItem('nvc_session', JSON.stringify(session));
-          showDashboardPage();
-        } else {
-          const user = findUserByCredentials(username, password);
-          if (user) {
-            const finalRole = user.role || 'shakha';
-
-            // Determine Shakha Name (Use Nepali Name if available)
-            let userShakha = null;
-            if (finalRole === 'shakha' || finalRole === 'admin_planning') {
-              userShakha = SHAKHA[user.code.toUpperCase()] || user.code;
-            }
-
-            state.currentUser = {
-              id: user.code, name: user.name, role: finalRole,
-              avatar: user.name.charAt(0), shakha: userShakha,
-              mahashakha: user.mahashakha, permissions: user.permissions || []
-            };
-
-            const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
-            localStorage.setItem('nvc_session', JSON.stringify(session));
-            showDashboardPage();
-          } else {
-            showToast('युजरनेम वा पासवर्ड मिलेन', 'error');
-          }
+          return;
         }
       }
+
+      // Fallback: Try hardcoded credentials and local users
+      if (username === 'admin' && password === 'nvc123') {
+        state.currentUser = {
+          id: 'admin', name: 'एडमिन', role: 'admin',
+          avatar: 'A', shakha: null,
+          mahashakha: null, permissions: ['all']
+        };
+
+        window.state = state; // Ensure window.state is synced
+        const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
+        localStorage.setItem('nvc_session', JSON.stringify(session));
+        showDashboardPage();
+        return;
+      }
+
+      // Try local hardcoded users
+      const user = findUserByCredentials(username, password);
+      if (user) {
+        const finalRole = user.role || 'shakha';
+
+        // Determine Shakha Name (Use Nepali Name if available)
+        let userShakha = null;
+        if (finalRole === 'shakha' || finalRole === 'admin_planning') {
+          userShakha = SHAKHA[user.code.toUpperCase()] || user.code;
+        }
+
+        state.currentUser = {
+          id: user.code, name: user.name, role: finalRole,
+          avatar: user.name.charAt(0), shakha: userShakha,
+          mahashakha: user.mahashakha, permissions: user.permissions || []
+        };
+
+        window.state = state; // Ensure window.state is synced
+        const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
+        localStorage.setItem('nvc_session', JSON.stringify(session));
+        showDashboardPage();
+        return;
+      }
+
+      // If Google Sheets is enabled but authentication failed, try to get updated user data
+      if (GOOGLE_SHEETS_CONFIG.ENABLED) {
+        try {
+          // Force fresh fetch with timestamp to prevent caching
+          const usersRes = await getFromGoogleSheets('getUsers', { t: Date.now() });
+          if (usersRes && usersRes.success && usersRes.data) {
+            state.users = usersRes.data;
+            // Try again with updated user data
+            const updatedUser = state.users.find(u => 
+              (u.username && u.username.toLowerCase() === username.toLowerCase()) ||
+              (u.code && u.code.toLowerCase() === username.toLowerCase())
+            );
+            if (updatedUser && updatedUser.password === password) {
+              const finalRole = updatedUser.role || 'shakha';
+              let userShakha = null;
+              if (finalRole === 'shakha' || finalRole === 'admin_planning') {
+                userShakha = SHAKHA[updatedUser.code?.toUpperCase()] || updatedUser.code;
+              }
+
+              state.currentUser = {
+                id: updatedUser.username || updatedUser.code || username,
+                name: updatedUser.name || username,
+                role: finalRole,
+                avatar: (updatedUser.name || username).toString().charAt(0) || 'U',
+                shakha: userShakha,
+                mahashakha: updatedUser.mahashakha || null,
+                permissions: updatedUser.permissions || []
+              };
+
+              window.state = state; // Ensure window.state is synced
+              const session = { user: state.currentUser, expires: Date.now() + (24 * 60 * 60 * 1000) };
+              localStorage.setItem('nvc_session', JSON.stringify(session));
+              showDashboardPage();
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch updated user data:', e);
+        }
+      }
+
+      showToast('युजरनेम वा पासवर्ड मिलेन', 'error');
     } catch (e) {
       console.error('Login error', e);
-      showToast('लगइन गर्दा समस्या आयो', 'error');
+      showToast('लगइन गर्दा समस्या भयो', 'error');
     } finally {
       loginBtn.innerHTML = originalText;
       loginBtn.disabled = false;
     }
-  }, 1000);
+  }, 500);
 }
 
 async function loadUsersFromSheetsForAdmin() {
@@ -4034,6 +4095,7 @@ function findUserByCredentials(username, password) {
 function _logout() {
   if (!confirm('के तपाईं लग-आउट गर्न चाहनुहुन्छ?')) return;
   state.currentUser = null;
+  window.state = state; // Ensure window.state is synced
   localStorage.removeItem('nvc_session');
   if (window.notificationInterval) clearInterval(window.notificationInterval);
   showPage('mainPage');
@@ -4186,9 +4248,9 @@ function updateStats() {
   const resolved = state.complaints.filter(c => c.status === 'resolved').length;
   const thisMonth = state.complaints.filter(c => {
     const today = new Date();
-    const complaintDate = new Date(c.date);
-    return complaintDate.getMonth() === today.getMonth() && 
-           complaintDate.getFullYear() === today.getFullYear();
+    const complaintDate = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+    if (!complaintDate || isNaN(complaintDate.getTime())) return false;
+    return complaintDate.getMonth() === today.getMonth() && complaintDate.getFullYear() === today.getFullYear();
   }).length;
   
   const totalEl = document.getElementById('totalComplaintsMain');
@@ -4373,6 +4435,7 @@ function loadSidebarNavigation() {
       <a href="#" class="nav-item active" onclick="showDashboardView()"><i class="fas fa-tachometer-alt"></i><span class="nav-text">ड्यासबोर्ड</span></a>
       <a href="#" class="nav-item" onclick="clearShakhaNewCount(); showComplaintsView(); return false;"><i class="fas fa-file-alt"></i><span class="nav-text">उजुरीहरू</span><span class="badge badge-danger ms-auto" id="pendingCount">${newCount}</span></a>
       <a href="#" class="nav-item" onclick="showNewComplaintView()"><i class="fas fa-plus-circle"></i><span class="nav-text">नयाँ उजुरी</span></a>
+      ${(state.currentUser.shakha || '').includes('प्राविधिक') ? `<a href="#" class="nav-item" onclick="showTechnicalProjectsView()"><i class="fas fa-hard-hat"></i><span class="nav-text">प्राविधिक परीक्षण/आयोजना अनुगमन</span></a>` : ''}
       <a href="#" class="nav-item" onclick="showReportsView()"><i class="fas fa-chart-bar"></i><span class="nav-text">रिपोर्टहरू</span></a>
       <a href="#" class="nav-item" onclick="showCalendarView()"><i class="fas fa-calendar-alt"></i><span class="nav-text">क्यालेन्डर</span></a>
     `;
@@ -4390,6 +4453,7 @@ function loadSidebarNavigation() {
       <a href="#" class="nav-item active" onclick="showDashboardView()"><i class="fas fa-tachometer-alt"></i><span class="nav-text">ड्यासबोर्ड</span></a>
       <a href="#" class="nav-item" onclick="showComplaintsView()"><i class="fas fa-file-alt"></i><span class="nav-text">उजुरीहरू</span><span class="badge badge-danger ms-auto">${pendingCount}</span></a>
       <a href="#" class="nav-item" onclick="showNewComplaintView()"><i class="fas fa-plus-circle"></i><span class="nav-text">नयाँ उजुरी</span></a>
+      <a href="#" class="nav-item" onclick="showTechnicalProjectsView()"><i class="fas fa-hard-hat"></i><span class="nav-text">प्राविधिक परीक्षण/आयोजना अनुगमन</span></a>
       <a href="#" class="nav-item" onclick="showReportsView()"><i class="fas fa-chart-bar"></i><span class="nav-text">रिपोर्टहरू</span></a>
       <a href="#" class="nav-item" onclick="showCalendarView()"><i class="fas fa-calendar-alt"></i><span class="nav-text">क्यालेन्डर</span></a>
     `;
@@ -4616,18 +4680,45 @@ function initializeDashboardCharts() {
       } catch(e) {}
 
       chartComplaints.forEach(c => {
-              if (!c.date) return;
-              // Try to parse date YYYY-MM-DD
-              const dParts = c.date.split('-');
-              if (dParts.length < 2) return;
-              const cY = parseInt(dParts[0]);
-              const cM = parseInt(dParts[1]);
-              
-              // Filter for current year and valid month
-              if (cY === currentNYear && cM >= 1 && cM <= 12) {
+          const raw = c.date || c['दर्ता मिति'] || c.dateNepali || '';
+          if (!raw) return;
+
+          // Convert Devanagari digits to Latin if helper exists
+          let txt = String(raw);
+          if (typeof _devnagariToLatin === 'function') {
+            try { txt = _devnagariToLatin(txt); } catch(e) { /* ignore */ }
+          }
+
+          // Try to extract YYYY-MM-DD or YYYY/MM/DD (may be BS in Nepali year)
+          let match = txt.match(/^(\d{4})[^0-9]?(\d{1,2})[^0-9]?(\d{1,2})/);
+          if (match) {
+            const cY = Number(match[1]);
+            const cM = Number(match[2]);
+            if (cY === currentNYear && cM >= 1 && cM <= 12) {
+              registeredData[cM - 1]++;
+              if (c.status === 'resolved') resolvedData[cM - 1]++;
+              return;
+            }
+          }
+
+          // Fallback: use normalizeNepaliDisplayToISO to try to get a YYYY-MM-DD string
+          if (typeof normalizeNepaliDisplayToISO === 'function') {
+            try {
+              const iso = normalizeNepaliDisplayToISO(raw);
+              const mm = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+              if (mm) {
+                const cY = Number(mm[1]);
+                const cM = Number(mm[2]);
+                if (cY === currentNYear && cM >= 1 && cM <= 12) {
                   registeredData[cM - 1]++;
                   if (c.status === 'resolved') resolvedData[cM - 1]++;
+                  return;
+                }
               }
+            } catch (e) { /* ignore parse errors */ }
+          }
+
+          // As a last resort, try parsing as AD and then skip (we don't convert AD->BS here)
       });
       
       window.nvcChartsData.trendChart = {
@@ -4808,6 +4899,19 @@ function initializeDashboardCharts() {
         }
       }
 
+      // Apply Date Filter if set
+      if (state.projectChartFilter && (state.projectChartFilter.startDate || state.projectChartFilter.endDate)) {
+          const start = state.projectChartFilter.startDate;
+          const end = state.projectChartFilter.endDate;
+          technicalProjects = technicalProjects.filter(p => {
+              const d = p.inspectionDate || '';
+              if (!d) return false;
+              if (start && d < start) return false;
+              if (end && d > end) return false;
+              return true;
+          });
+      }
+
       const active = technicalProjects.filter(p => p.status === 'active').length;
       const completed = technicalProjects.filter(p => (p.improvementInfo && String(p.improvementInfo).trim() !== '')).length;
       const pending = technicalProjects.filter(p => (!p.improvementInfo || String(p.improvementInfo).trim() === '')).length;
@@ -4833,7 +4937,7 @@ function initializeDashboardCharts() {
                     const i = elements[0].index;
                     const label = chart.data.labels[i];
                     const statusMap = { 'चालु': 'active', 'सम्पन्न': 'completed', 'काम बाँकी': 'pending' };
-                    showTechnicalProjectsView({ status: statusMap[label] });
+                    showProjectDrillDown({ status: statusMap[label] }, `${label} आयोजनाहरू`);
                 }
             },
             plugins: {
@@ -5096,14 +5200,51 @@ function showChartDrillDown(filters, title) {
   if (filters.shakha) filtered = filtered.filter(c => c.shakha === filters.shakha);
     
     if (filters.monthIndex) {
-        filtered = filtered.filter(c => {
-            if (!c.date) return false;
-            const parts = c.date.split('-');
-            if (parts.length >= 2) return parseInt(parts[1]) === filters.monthIndex;
-            return false;
-        });
+      // Determine current Nepali year (same heuristic as trend chart)
+      let currentNYear = 2081;
+      try { const nDate = getCurrentNepaliDate(); const p = String(nDate).split('-'); if (p.length >= 1) currentNYear = parseInt(p[0]) || currentNYear; } catch(e) {}
+
+      filtered = filtered.filter(c => {
+        const raw = c.date || c.dateNepali || c['दर्ता मिति'] || '';
+        if (!raw) return false;
+
+        // Convert Devanagari digits to Latin for matching
+        let txt = String(raw);
+        try { if (typeof _devnagariToLatin === 'function') txt = _devnagariToLatin(txt); } catch(e) {}
+
+        // Try simple YYYY-MM-DD or similar first
+        let match = txt.match(/^(\d{4})[^0-9]?(\d{1,2})[^0-9]?(\d{1,2})/);
+        if (match) {
+          const y = Number(match[1]);
+          const mo = Number(match[2]);
+          if (y === currentNYear && mo === filters.monthIndex) return true;
+          // If it's AD (year < 2050) try converting to BS and check
+          if (y < 2050) {
+            try {
+              const bs = (typeof convertADtoBS === 'function' ? convertADtoBS(txt) : '') || (typeof convertADtoBSAccurate === 'function' ? convertADtoBSAccurate(txt) : '');
+              const mm = String(bs).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+              if (mm) {
+                if (Number(mm[1]) === currentNYear && Number(mm[2]) === filters.monthIndex) return true;
+              }
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        // Fallback: use normalizeNepaliDisplayToISO to attempt YYYY-MM-DD extraction
+        try {
+          if (typeof normalizeNepaliDisplayToISO === 'function') {
+            const iso = normalizeNepaliDisplayToISO(raw);
+            const mm = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (mm) {
+              if (Number(mm[1]) === currentNYear && Number(mm[2]) === filters.monthIndex) return true;
+            }
+          }
+        } catch (e) { /* ignore */ }
+
+        return false;
+      });
     } else if (filters.month) {
-        filtered = filtered.filter(c => (c.date || '').includes(filters.month));
+      filtered = filtered.filter(c => (c.date || '').includes(filters.month));
     }
 
     if (filters.classification) {
@@ -5144,6 +5285,103 @@ function showChartDrillDown(filters, title) {
     `;
     
     openModal(title || 'विवरण', content);
+}
+
+function showProjectDrillDown(filters, title) {
+  const canUseOverviewScope = state.currentView === 'technical_projects_overview' && (state._technicalOverviewProjects && Array.isArray(state._technicalOverviewProjects));
+  let projects = canUseOverviewScope ? (state._technicalOverviewProjects || []) : (state.projects || []);
+
+  if (!canUseOverviewScope) {
+    if (state.currentUser && state.currentUser.role === 'admin') {
+      // admin sees all
+    } else if (state.currentUser && state.currentUser.role === 'mahashakha' && ((state.currentUser.mahashakha || state.currentUser.name || '').toString() === MAHASHAKHA.TECHNICAL)) {
+      const allowed = MAHASHAKHA_STRUCTURE[MAHASHAKHA.TECHNICAL] || [];
+      projects = projects.filter(p => {
+        const s = (p.shakha || '').toString();
+        if (!s) return false;
+        if (allowed.includes(s)) return true;
+        if (s.includes('प्राविधिक')) return true;
+        return false;
+      });
+    } else if (state.currentUser) {
+      const userShakhaName = (state.currentUser.shakha || '').trim();
+      const userCode = (state.currentUser.id || '').trim();
+      projects = projects.filter(p => {
+        const pShakha = (p.shakha || '').trim();
+        return pShakha === userShakhaName || 
+               pShakha.toLowerCase() === userCode.toLowerCase() ||
+               SHAKHA[pShakha] === userShakhaName ||
+               SHAKHA[pShakha.toUpperCase()] === userShakhaName;
+      });
+    }
+  }
+
+  if (filters.status) {
+    if (filters.status === 'active') projects = projects.filter(p => p.status === 'active');
+    else if (filters.status === 'completed') projects = projects.filter(p => p.improvementInfo && String(p.improvementInfo).trim() !== '');
+    else if (filters.status === 'pending') projects = projects.filter(p => !p.improvementInfo || String(p.improvementInfo).trim() === '');
+  }
+
+  const tableRows = projects.map((p, i) => {
+    const statusLabel = (p.improvementInfo && String(p.improvementInfo).trim() !== '') ? 'सम्पन्न' : (p.status === 'active' ? 'चालु' : 'काम बाँकी');
+    const badgeClass = (statusLabel === 'सम्पन्न') ? 'status-resolved' : (statusLabel === 'चालु') ? 'status-progress' : 'status-pending';
+    return `<tr><td>${i + 1}</td><td>${p.name || '-'}</td><td>${p.organization || '-'}</td><td>${p.inspectionDate || '-'}</td><td><span class="status-badge ${badgeClass}">${statusLabel}</span></td><td><button class="btn btn-sm btn-light action-btn" onclick="viewProject('${p.id}')" title="हेर्नुहोस्"><i class="fas fa-eye"></i></button></td></tr>`;
+  }).join('');
+
+  const content = `
+    <div class="table-responsive">
+      <table class="table table-sm table-hover">
+        <thead><tr><th>क्र.सं.</th><th>आयोजनाको नाम</th><th>निकाय</th><th>मिति</th><th>स्थिति</th><th>कार्य</th></tr></thead>
+        <tbody>${tableRows.length ? tableRows : '<tr><td colspan="6" class="text-center">डाटा छैन</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+  openModal(title || 'आयोजना विवरण', content);
+}
+
+function openProjectDateFilter() {
+    const content = `
+        <div class="form-group mb-3">
+            <label class="form-label">देखि (Start Date)</label>
+            <div class="nepali-datepicker-dropdown" data-target="projChartStart">
+                <select id="projChartStart_year" class="form-select bs-year"><option value="">साल</option></select>
+                <select id="projChartStart_month" class="form-select bs-month"><option value="">महिना</option></select>
+                <select id="projChartStart_day" class="form-select bs-day"><option value="">गते</option></select>
+                <input type="hidden" id="projChartStart" value="${state.projectChartFilter?.startDate || ''}" />
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">सम्म (End Date)</label>
+            <div class="nepali-datepicker-dropdown" data-target="projChartEnd">
+                <select id="projChartEnd_year" class="form-select bs-year"><option value="">साल</option></select>
+                <select id="projChartEnd_month" class="form-select bs-month"><option value="">महिना</option></select>
+                <select id="projChartEnd_day" class="form-select bs-day"><option value="">गते</option></select>
+                <input type="hidden" id="projChartEnd" value="${state.projectChartFilter?.endDate || ''}" />
+            </div>
+        </div>
+        <div class="d-flex justify-end gap-2">
+            <button class="btn btn-outline-secondary" onclick="clearProjectDateFilter()">रिसेट</button>
+            <button class="btn btn-primary" onclick="applyProjectDateFilter()">फिल्टर गर्नुहोस्</button>
+        </div>
+    `;
+    openModal('मिति अनुसार फिल्टर (प्राविधिक चार्ट)', content);
+    setTimeout(() => { initializeNepaliDropdowns(); }, 100);
+}
+
+function applyProjectDateFilter() {
+    const start = document.getElementById('projChartStart').value;
+    const end = document.getElementById('projChartEnd').value;
+    state.projectChartFilter = { startDate: start, endDate: end };
+    closeModal();
+    initializeDashboardCharts();
+    showToast('चार्ट फिल्टर गरियो', 'success');
+}
+
+function clearProjectDateFilter() {
+    state.projectChartFilter = { startDate: '', endDate: '' };
+    closeModal();
+    initializeDashboardCharts();
+    showToast('फिल्टर हटाइयो', 'info');
 }
 
 function changeChartType(chartId, newType) {
@@ -5293,9 +5531,9 @@ function showAdminDashboard() {
   const resolvedComplaints = state.complaints.filter(c => c.status === 'resolved').length;
   const monthlyComplaints = state.complaints.filter(c => {
     const today = new Date();
-    const complaintDate = new Date(c.date);
-    return complaintDate.getMonth() === today.getMonth() && 
-           complaintDate.getFullYear() === today.getFullYear();
+    const complaintDate = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+    if (!complaintDate || isNaN(complaintDate.getTime())) return false;
+    return complaintDate.getMonth() === today.getMonth() && complaintDate.getFullYear() === today.getFullYear();
   }).length;
   
   const shakhaStats = {};
@@ -5351,6 +5589,7 @@ function showAdminDashboard() {
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">मासिक प्रगति विवरण</h6>${getChartActionsHTML('trendChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="trendChart"></canvas></div></div>
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">शाखा अनुसार फछ्र्यौट दर</h6>${getChartActionsHTML('resolutionRateChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="resolutionRateChart"></canvas></div></div>
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">मन्त्रालय/निकाय अनुसार उजुरी</h6>${getChartActionsHTML('adminMinistryChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="adminMinistryChart"></canvas></div></div>
+      <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><div class="d-flex align-center gap-2"><h6 class="chart-title mb-0">प्राविधिक परीक्षण/आयोजना अनुगमन</h6><button class="btn btn-sm btn-link text-muted p-0" onclick="openProjectDateFilter()" title="मिति फिल्टर"><i class="fas fa-calendar-alt"></i></button></div>${getChartActionsHTML('projectStatusChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="projectStatusChart"></canvas></div></div>
     </div>
     
     <div class="card mb-3">
@@ -5466,9 +5705,9 @@ function showMahashakhaDashboard() {
   const resolvedComplaints = mahashakhaComplaints.filter(c => c.status === 'resolved').length;
   const monthlyComplaints = mahashakhaComplaints.filter(c => {
     const today = new Date();
-    const complaintDate = new Date(c.date);
-    return complaintDate.getMonth() === today.getMonth() && 
-           complaintDate.getFullYear() === today.getFullYear();
+    const complaintDate = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+    if (!complaintDate || isNaN(complaintDate.getTime())) return false;
+    return complaintDate.getMonth() === today.getMonth() && complaintDate.getFullYear() === today.getFullYear();
   }).length;
   
   // Group by Shakha
@@ -5530,6 +5769,7 @@ function showMahashakhaDashboard() {
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">मासिक प्रगति विवरण</h6>${getChartActionsHTML('trendChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="trendChart"></canvas></div></div>
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">शाखा अनुसार फछ्र्यौट दर</h6>${getChartActionsHTML('resolutionRateChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="resolutionRateChart"></canvas></div></div>
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">मन्त्रालय/निकाय अनुसार उजुरी</h6>${getChartActionsHTML('mahashakhaMinistryChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="mahashakhaMinistryChart"></canvas></div></div>
+      ${(state.currentUser.mahashakha === MAHASHAKHA.TECHNICAL || state.currentUser.name === MAHASHAKHA.TECHNICAL) ? `<div class="chart-container"><div class="chart-header d-flex justify-between align-center"><div class="d-flex align-center gap-2"><h6 class="chart-title mb-0">प्राविधिक परीक्षण/आयोजना अनुगमन</h6><button class="btn btn-sm btn-link text-muted p-0" onclick="openProjectDateFilter()" title="मिति फिल्टर"><i class="fas fa-calendar-alt"></i></button></div>${getChartActionsHTML('projectStatusChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="projectStatusChart"></canvas></div></div>` : ''}
     </div>
     
     <div class="card mb-3">
@@ -5704,8 +5944,8 @@ function showTechnicalDashboard() {
     </div>
 
     <div class="d-grid gap-3 mb-3" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-      <div class="card"><div class="card-header d-flex justify-between align-center"><h6 class="mb-0">उजुरी स्थिति</h6>${getChartActionsHTML('complaintStatusChart')}</div><div class="card-body"><canvas id="complaintStatusChart"></canvas></div></div>
-      <div class="card"><div class="card-header d-flex justify-between align-center"><h6 class="mb-0">प्राविधिक परीक्षण/आयोजना अनुगमन</h6>${getChartActionsHTML('projectStatusChart')}</div><div class="card-body"><canvas id="projectStatusChart"></canvas></div></div>
+      <div class="card"><div class="card-header d-flex justify-between align-center"><h6 class="mb-0">उजुरी स्थिति</h6>${getChartActionsHTML('complaintStatusChart')}</div><div class="card-body"><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="complaintStatusChart"></canvas></div></div></div>
+      <div class="card"><div class="card-header d-flex justify-between align-center"><div class="d-flex align-center gap-2"><h6 class="mb-0">प्राविधिक परीक्षण/आयोजना अनुगमन</h6><button class="btn btn-sm btn-link text-muted p-0" onclick="openProjectDateFilter()" title="मिति फिल्टर"><i class="fas fa-calendar-alt"></i></button></div>${getChartActionsHTML('projectStatusChart')}</div><div class="card-body"><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="projectStatusChart"></canvas></div></div></div>
     </div>
     
     <div class="d-grid gap-3 mb-3" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
@@ -5768,10 +6008,25 @@ function showShakhaDashboard() {
   const resolvedComplaints = shakhaComplaints.filter(c => c.status === 'resolved').length;
   const monthlyComplaints = shakhaComplaints.filter(c => {
     const today = new Date();
-    const complaintDate = new Date(c.date);
-    return complaintDate.getMonth() === today.getMonth() && 
-           complaintDate.getFullYear() === today.getFullYear();
+    const complaintDate = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+    if (!complaintDate || isNaN(complaintDate.getTime())) return false;
+    return complaintDate.getMonth() === today.getMonth() && complaintDate.getFullYear() === today.getFullYear();
   }).length;
+  
+  // Filter technical projects for this shakha
+  let technicalProjects = state.projects || [];
+  if (state.currentUser && state.currentUser.role !== 'admin') {
+    const userShakhaName = (state.currentUser.shakha || '').trim();
+    const userCode = (state.currentUser.id || '').trim();
+    technicalProjects = technicalProjects.filter(p => {
+      const pShakha = (p.shakha || '').trim();
+      return pShakha === userShakhaName || 
+             pShakha.toLowerCase() === userCode.toLowerCase() ||
+             SHAKHA[pShakha] === userShakhaName ||
+             SHAKHA[pShakha.toUpperCase()] === userShakhaName;
+    });
+  }
+  const activeProjects = technicalProjects.filter(p => p.status === 'active').length;
   
   return `
     <div class="search-bar-container mb-3">
@@ -5785,8 +6040,13 @@ function showShakhaDashboard() {
     <div class="stats-grid mb-3">
       <div class="stat-widget pointer" onclick="showComplaintsView()"><div class="stat-icon bg-primary"><i class="fas fa-file-alt"></i></div><div class="stat-info"><div class="stat-value">${shakhaComplaints.length}</div><div class="stat-label">कूल उजुरीहरू</div><span class="stat-trend trend-up"></span></div></div>
       <div class="stat-widget pointer" onclick="showComplaintsView({status: 'pending'})"><div class="stat-icon bg-warning"><i class="fas fa-clock"></i></div><div class="stat-info"><div class="stat-value">${pendingComplaints}</div><div class="stat-label">काम बाँकी</div><span class="stat-trend trend-down"></span></div></div>
+      ${(state.currentUser && (state.currentUser.shakha || '').includes('प्राविधिक')) ? `
+      <div class="stat-widget pointer" onclick="showTechnicalProjectsView()"><div class="stat-icon bg-success"><i class="fas fa-hard-hat"></i></div><div class="stat-info"><div class="stat-value">${technicalProjects.length}</div><div class="stat-label">प्राविधिक परीक्षण/आयोजना अनुगमन</div><span class="stat-trend trend-up"></span></div></div>
+      <div class="stat-widget pointer" onclick="showTechnicalProjectsView({status: 'active'})"><div class="stat-icon bg-secondary"><i class="fas fa-tasks"></i></div><div class="stat-info"><div class="stat-value">${activeProjects}</div><div class="stat-label">चालु आयोजना</div><span class="stat-trend trend-up"></span></div></div>
+      ` : `
       <div class="stat-widget pointer" onclick="showComplaintsView({status: 'resolved'})"><div class="stat-icon bg-success"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">${resolvedComplaints}</div><div class="stat-label">फछ्रयौट भएका</div><span class="stat-trend trend-up"></span></div></div>
       <div class="stat-widget pointer" onclick="showComplaintsView()"><div class="stat-icon bg-secondary"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><div class="stat-value">${monthlyComplaints}</div><div class="stat-label">यस महिनाका</div><span class="stat-trend trend-up"></span></div></div>
+      `}
     </div>
     
     <div class="card mb-3">
@@ -5800,6 +6060,7 @@ function showShakhaDashboard() {
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">उजुरी स्थिति</h6>${getChartActionsHTML('complaintStatusChart')}</div><div class="chart-wrapper"><canvas id="complaintStatusChart"></canvas></div></div>
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">मासिक प्रगति विवरण</h6>${getChartActionsHTML('trendChart')}</div><div class="chart-wrapper"><canvas id="trendChart"></canvas></div></div>
       <div class="chart-container"><div class="chart-header d-flex justify-between align-center"><h6 class="chart-title">मन्त्रालय/निकाय अनुसार उजुरी</h6>${getChartActionsHTML('shakhaMinistryChart')}</div><div class="chart-wrapper"><canvas id="shakhaMinistryChart"></canvas></div></div>
+      ${(state.currentUser && (state.currentUser.shakha || '').includes('प्राविधिक')) ? `<div class="chart-container"><div class="chart-header d-flex justify-between align-center"><div class="d-flex align-center gap-2"><h6 class="chart-title mb-0">प्राविधिक परीक्षण/आयोजना अनुगमन</h6><button class="btn btn-sm btn-link text-muted p-0" onclick="openProjectDateFilter()" title="मिति फिल्टर"><i class="fas fa-calendar-alt"></i></button></div>${getChartActionsHTML('projectStatusChart')}</div><div class="chart-wrapper dashboard-chart-wrapper"><canvas id="projectStatusChart"></canvas></div></div>` : ''}
     </div>
     
     <div class="card">
@@ -5906,12 +6167,34 @@ function showComplaintsView(initialFilters = {}) {
     }
 
   if (startDate || endDate) {
+      // Normalize start/end to AD Date objects (supports BS via _parseComplaintRegDateToAD)
+      const startAD = (typeof _parseComplaintRegDateToAD === 'function' && startDate) ? _parseComplaintRegDateToAD({ date: startDate }) : null;
+      const endAD = (typeof _parseComplaintRegDateToAD === 'function' && endDate) ? _parseComplaintRegDateToAD({ date: endDate }) : null;
+
       complaintsToShow = complaintsToShow.filter(c => {
-          const cDate = c.date || c['दर्ता मिति'] || '';
-          if (!cDate) return false;
-          // Simple string comparison works for YYYY-MM-DD
-          if (startDate && cDate < startDate) return false;
-          if (endDate && cDate > endDate) return false;
+          const raw = c.date || c['दर्ता मिति'] || c.entryDate || '';
+          if (!raw) return false;
+          let cAD = null;
+          if (typeof _parseComplaintRegDateToAD === 'function') {
+            cAD = _parseComplaintRegDateToAD(c);
+          }
+          // Fallback: try normalizeNepaliDisplayToISO then construct Date
+          if (!cAD || isNaN(cAD.getTime())) {
+            try {
+              if (typeof normalizeNepaliDisplayToISO === 'function') {
+                const iso = normalizeNepaliDisplayToISO(raw);
+                cAD = new Date(iso + 'T00:00:00');
+              } else {
+                const latin = (typeof _devnagariToLatin === 'function') ? _devnagariToLatin(String(raw)) : String(raw);
+                const m = latin.match(/(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})/);
+                if (m) cAD = new Date(`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}T00:00:00`);
+              }
+            } catch (e) { cAD = null; }
+          }
+          if (!cAD || isNaN(cAD.getTime())) return false;
+
+          if (startAD && cAD < startAD) return false;
+          if (endAD && cAD > endAD) return false;
           return true;
       });
   }
@@ -7512,6 +7795,14 @@ function showTechnicalProjectsView(options = {}) {
   state.currentView = 'technical_projects';
   document.getElementById('pageTitle').textContent = 'प्राविधिक परीक्षण';
 
+  // Check if user can add projects (admin, technical_head, or technical shakha users)
+  const canAddProject = state.currentUser && (
+    state.currentUser.role === 'admin' || 
+    state.currentUser.role === 'technical_head' ||
+    (state.currentUser.shakha && state.currentUser.shakha.includes('प्राविधिक')) ||
+    (state.currentUser.shakha && ['technical1', 'technical2', 'technical3', 'technical4'].includes(state.currentUser.shakha.toLowerCase()))
+  );
+
   // Avoid leaking overview-scoped data to other views
   try { delete state._technicalOverviewProjects; } catch (e) { state._technicalOverviewProjects = null; }
   
@@ -7558,7 +7849,7 @@ function showTechnicalProjectsView(options = {}) {
       <div class="filter-group"><input type="text" class="form-control form-control-sm" placeholder="खोज्नुहोस्..." id="projectSearchText" /></div>
       <button class="btn btn-primary btn-sm" onclick="filterProjects()">खोज्नुहोस्</button>
       <button class="btn btn-success btn-sm" onclick="exportToExcel('technical_projects')"><i class="fas fa-file-excel"></i> Excel</button>
-      <button class="btn btn-primary btn-sm" onclick="showNewProjectModal()"><i class="fas fa-plus"></i> नयाँ आयोजना</button>
+      ${canAddProject ? '<button class="btn btn-primary btn-sm" onclick="showNewProjectModal()"><i class="fas fa-plus"></i> नयाँ आयोजना</button>' : ''}
     </div>
     
     <div class="card">
@@ -9065,19 +9356,34 @@ async function resetUserPassword(id) {
   try {
     showLoadingIndicator(true);
     if (GOOGLE_SHEETS_CONFIG.ENABLED) {
-      const res = await postToGoogleSheets('saveUser', { username: String(id), password: newPass });
+      const res = await postToGoogleSheets('saveUser', { username: String(id), password: newPass, t: Date.now() });
       if (!res || res.success !== true) {
         showToast(res && res.message ? res.message : 'पासवर्ड रिसेट हुन सकेन', 'error');
         return;
+      }
+      
+      // Wait a moment for Google Sheets to process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Force refresh users from Google Sheets to get updated data
+      try {
+        const usersRes = await getFromGoogleSheets('getUsers', { t: Date.now() });
+        if (usersRes && usersRes.success && usersRes.data) {
+          state.users = usersRes.data;
+          console.log('✅ Users refreshed after password reset:', state.users.length);
+        }
+      } catch (e) {
+        console.warn('Failed to refresh user data after password reset:', e);
       }
     } else {
       state.users[userIndex].password = newPass;
     }
     showToast('पासवर्ड रिसेट गरियो (नयाँ पासवर्ड: nvc@2026)', 'success');
+    closeModal();
     await showUserManagementView();
   } catch (e) {
     console.error('resetUserPassword error', e);
-    showToast('पासवर्ड रिसेट गर्दा समस्या आयो', 'error');
+    showToast('पासवर्ड रिसेट गर्दा समस्या भयो', 'error');
   } finally {
     showLoadingIndicator(false);
   }
@@ -9910,9 +10216,9 @@ function generateMonthlyReport() {
   const reportName = `${year} ${monthName} महिनाको रिपोर्ट`;
   
   const monthlyComplaints = state.complaints.filter(c => {
-    const complaintDate = new Date(c.date);
-    return complaintDate.getMonth() === currentDate.getMonth() && 
-           complaintDate.getFullYear() === currentDate.getFullYear();
+    const complaintDate = (typeof _parseComplaintRegDateToAD === 'function') ? _parseComplaintRegDateToAD(c) : null;
+    if (!complaintDate || isNaN(complaintDate.getTime())) return false;
+    return complaintDate.getMonth() === currentDate.getMonth() && complaintDate.getFullYear() === currentDate.getFullYear();
   });
   
   if (monthlyComplaints.length === 0) {
@@ -10183,6 +10489,7 @@ async function initializeApp() {
       const session = JSON.parse(savedSession);
       if (session.expires > Date.now()) {
         state.currentUser = session.user;
+        window.state = state; // Ensure window.state is synced
         console.log('✅ Session restored for:', state.currentUser.name);
       } else {
         localStorage.removeItem('nvc_session');
@@ -10869,4 +11176,7 @@ if (typeof window !== 'undefined') {
   window.assignToShakha = assignToShakha;
   window.closeShakhaModal = closeShakhaModal;
   window.closeSettingsModal = closeSettingsModal;
+  window.openProjectDateFilter = openProjectDateFilter;
+  window.applyProjectDateFilter = applyProjectDateFilter;
+  window.clearProjectDateFilter = clearProjectDateFilter;
 }
