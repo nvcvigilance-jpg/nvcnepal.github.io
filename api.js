@@ -12,54 +12,84 @@
       return { success: false, data: [], message: 'Integration disabled' };
     }
     if (!cfg.API_KEY) return { success: false, data: [], message: 'API Key missing' };
-    if (!cfg.WEB_APP_URL || !cfg.WEB_APP_URL.includes('script.google.com/macros/s/')) {
+    if (!cfg.WEB_APP_URL || cfg.WEB_APP_URL.includes('script.google.com/macros/s/') === false) {
       return { success: false, data: [], message: 'Invalid Web App URL' };
     }
 
-    const url = new URL(cfg.WEB_APP_URL);
-    url.searchParams.append('action', action);
-    url.searchParams.append('apiKey', cfg.API_KEY);
-    Object.keys(params || {}).forEach(key => {
-      const v = params[key];
-      if (v !== undefined && v !== null && v !== '') {
-        url.searchParams.append(key, String(v));
+    return new Promise((resolve) => {
+      try {
+        let url = cfg.WEB_APP_URL;
+        url += `?action=${encodeURIComponent(action)}`;
+        url += `&apiKey=${encodeURIComponent(cfg.API_KEY)}`;
+        Object.keys(params || {}).forEach(key => {
+          const v = params[key];
+          if (v !== undefined && v !== null && v !== '') url += `&${encodeURIComponent(key)}=${encodeURIComponent(String(v))}`;
+        });
+        const callbackName = `jsonp_${action}_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+        url += `&callback=${callbackName}`;
+        url += `&t=${Date.now()}`;
+
+        let isResolved = false;
+        let retryCount = 0;
+
+        const timeout = setTimeout(() => {
+          if (!isResolved) {
+            cleanup();
+            if (retryCount < (cfg.MAX_RETRIES || 3)) {
+              retryCount++;
+              setTimeout(() => {
+                const newCallback = `${callbackName}_retry${retryCount}`;
+                url = url.replace(/&callback=[^&]+/, `&callback=${newCallback}`);
+                url = url.replace(/&t=\d+/, `&t=${Date.now()}`);
+                window[newCallback] = window[callbackName];
+                script.src = url;
+                document.head.appendChild(script);
+              }, (cfg.RETRY_DELAY || 1000) * retryCount);
+            } else {
+              resolve({ success: false, data: [], message: 'Timeout after retries', action });
+            }
+          }
+        }, cfg.TIMEOUT || 30000);
+
+        const cleanup = () => {
+          clearTimeout(timeout);
+          try { if (window[callbackName]) delete window[callbackName]; } catch (e) {}
+          try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
+        };
+
+        window[callbackName] = function(response) {
+          if (isResolved) return;
+          isResolved = true; cleanup();
+          let formatted = response || { success: false, data: [] };
+          if (Array.isArray(formatted)) formatted = { success: true, data: formatted, count: formatted.length };
+          else if (formatted.data && Array.isArray(formatted.data) && formatted.success === undefined) formatted.success = true;
+          else if (formatted.success === undefined) formatted.success = !!formatted.data || !!formatted.id;
+          resolve(formatted);
+        };
+
+        const script = document.createElement('script');
+        script.src = url; script.async = true;
+        script.onerror = function(error) {
+          if (isResolved) return;
+          if (retryCount < (cfg.MAX_RETRIES || 3)) {
+            retryCount++;
+            setTimeout(() => {
+              try { url = url.replace(/&t=\d+/, `&t=${Date.now()}`); } catch (e) {}
+              const newScript = document.createElement('script'); newScript.src = url; newScript.async = true; newScript.onerror = script.onerror; document.head.appendChild(newScript);
+            }, (cfg.RETRY_DELAY || 1000) * retryCount);
+          } else {
+            cleanup();
+            try { if (typeof NVC.UI !== 'undefined' && typeof NVC.UI.showToast === 'function') NVC.UI.showToast('❌ Google Sheets connect हुन सकेन। Apps Script Web App deployment (Anyone access) र URL जाँच गर्नुहोस्।', {bg:'#d32f2f'}); } catch (e) {}
+            console.error('❌ Google Sheets Script Load Error: Possible CORS or Permissions issue. Ensure "Who has access" is set to "Anyone". URL:', url);
+            resolve({ success: false, data: [], message: 'Network error after retries', action });
+          }
+        };
+
+        document.head.appendChild(script);
+      } catch (error) {
+        resolve({ success: false, data: [], message: String(error), action });
       }
     });
-    url.searchParams.append('t', Date.now()); // cache buster
-
-    try {
-      // Using fetch for GET requests. This avoids JSONP multi-login issues.
-      // The Google Apps Script doGet must return a proper JSON response
-      // with ContentService.MimeType.JSON for this to work with CORS.
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        mode: 'cors',
-        cache: 'no-cache',
-        redirect: 'follow' // Google Apps Script often redirects, so follow it.
-      });
-
-      if (!response.ok) {
-        console.error(`Google Sheets GET failed with status: ${response.status}`);
-        return { success: false, data: [], message: `Network error: ${response.statusText}`, action };
-      }
-
-      // The Apps Script should return a JSON response.
-      const result = await response.json();
-      return result;
-
-    } catch (error) {
-      console.error('❌ Google Sheets GET Error:', error);
-      let message = `Request failed: ${error.message}.`;
-      if (error instanceof TypeError) { // Often indicates a CORS or network issue
-        message = 'Google Sheets बाट डाटा तान्न सकिएन (CORS or Network Error)। Apps Script Web App deployment (Anyone access) र URL जाँच गर्नुहोस्।';
-        try {
-          if (typeof NVC.UI !== 'undefined' && typeof NVC.UI.showToast === 'function') {
-            NVC.UI.showToast(message, { bg: '#d32f2f', duration: 7000 });
-          }
-        } catch (e) {}
-      }
-      return { success: false, data: [], message: message, action };
-    }
   };
 
   // Full-featured JSONP POST (moved from script.js)
@@ -67,52 +97,59 @@
     if (!cfg || !cfg.ENABLED) {
       return { success: true, message: 'Data saved locally (Google Sheets disabled)', id: data.id || null, local: true };
     }
+    return new Promise((resolve) => {
+      try {
+        let url = cfg.WEB_APP_URL;
+        url += `?action=${encodeURIComponent(action)}`;
+        url += `&apiKey=${encodeURIComponent(cfg.API_KEY)}`;
+        url += `&t=${Date.now()}`; // Add timestamp to prevent caching
 
-    // The payload to be sent.
-    const payload = {
-        action: action,
-        apiKey: cfg.API_KEY,
-        ...data
-    };
+        const enhanced = { ...data };
+        try { Object.keys(data || {}).forEach(k => { const v = data[k]; if (v === undefined || v === null) return; const keyStr = String(k); const dateRegex = /date|मिति|दर्ता/i; if (dateRegex.test(keyStr)) { try { if (typeof NVC.Utils !== 'undefined' && typeof NVC.Utils.latinToDevanagari === 'function') enhanced[k] = NVC.Utils.latinToDevanagari(String(v)); else enhanced[k] = String(v); enhanced[`${k}Iso`] = String(v); } catch (e) {} } }); } catch (e) {}
 
-    try {
-        // Using fetch with POST and text/plain content type to avoid CORS preflight issues.
-        // The Google Apps Script must be set up to handle this by parsing e.postData.contents.
-        const response = await fetch(cfg.WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors',
-            cache: 'no-cache',
-            headers: {
-                'Content-Type': 'text/plain;charset=UTF-8',
-            },
-            body: JSON.stringify(payload),
-            redirect: 'follow'
-        });
+        Object.keys(enhanced).forEach(key => { const value = enhanced[key]; if (value !== undefined && value !== null) { url += `&${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`; } });
+        const callbackName = `post_${action}_${Date.now()}`;
+        url += `&callback=${callbackName}`;
 
-        if (!response.ok) {
-            // Handle HTTP errors (e.g., 404, 500)
-            console.error(`Google Sheets POST failed with status: ${response.status}`);
-            return { success: false, message: `Network error: ${response.statusText}. Saved locally.`, id: data.id, local: true };
-        }
+        let isResolved = false; let didTimeout = false; let lateHandled = false;
+        const timeout = setTimeout(() => {
+          if (!isResolved) { didTimeout = true; isResolved = true; resolve({ success: false, message: 'Request timed out. Saved locally for later sync.', id: data.id, local: true, timeout: true }); }
+        }, cfg.TIMEOUT || 60000);
 
-        // The Apps Script should return a JSON response with correct CORS headers.
-        // If it doesn't, the await response.json() will fail due to CORS policy.
-        const result = await response.json();
-        return result;
+        window[callbackName] = function(response) {
+          if (lateHandled) return;
+          if (didTimeout) { lateHandled = true; try { const isSuccess = response && (response.success === true || response.success === 'true'); if (isSuccess) { try { if (typeof NVC.UI !== 'undefined' && typeof NVC.UI.showToast === 'function') NVC.UI.showToast('✅ उजुरी Google Sheet मा सेभ भयो (ढिलो प्रतिक्रिया)', {bg:'#2e7d32'}); } catch (e) {} } } catch (e) {} finally { try { delete window[callbackName]; } catch(e){}; try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {} } return; }
+          if (isResolved) return; isResolved = true; clearTimeout(timeout); try { delete window[callbackName]; } catch (e) {};
+          try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
+          let formatted = response || { success: false, message: 'No response from server', id: data.id, local: true };
+          if (typeof formatted === 'string') { try { formatted = JSON.parse(formatted); } catch (e) { formatted = { success: false, message: formatted, id: data.id, local: true }; } }
+          if (formatted.success === undefined) formatted.success = false;
+          resolve(formatted);
+        };
 
-    } catch (error) {
-        console.error('❌ Google Sheets POST Error:', error);
-        let message = `Request failed: ${error.message}. Saved locally.`;
-        if (error instanceof TypeError) { // Often indicates a CORS or network issue
-            message = 'Google Sheets मा पठाउन सकिएन (CORS or Network Error)। Apps Script Web App deployment र URL जाँच गर्नुहोस्।';
+        const script = document.createElement('script'); script.src = url; script.async = true;
+        script.onerror = function(error) {
+          if (isResolved) return;
+          (async () => {
             try {
-                if (typeof NVC.UI !== 'undefined' && typeof NVC.UI.showToast === 'function') {
-                    NVC.UI.showToast(message, { bg: '#d32f2f', duration: 7000 });
-                }
-            } catch (e) {}
-        }
-        return { success: false, message: message, id: data.id, local: true };
-    }
+              clearTimeout(timeout);
+              const bodyParams = new URLSearchParams(); bodyParams.append('action', action); bodyParams.append('apiKey', cfg.API_KEY);
+              Object.keys(enhanced || data).forEach(k => { const v = (enhanced && enhanced[k] !== undefined) ? enhanced[k] : data[k]; if (v !== undefined && v !== null) bodyParams.append(k, String(v)); });
+              const resp = await fetch(cfg.WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: bodyParams.toString(), credentials: 'omit' });
+              let json = null; try { json = await resp.json(); } catch (e) { json = null; }
+              if (json && (json.success === true || json.success === 'true')) { isResolved = true; try { delete window[callbackName]; } catch (e) {} try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {} resolve(json); return; }
+            } catch (fetchError) {
+              console.error('❌ Google Sheets Fallback Fetch Error:', fetchError);
+            }
+            if (isResolved) return; isResolved = true; clearTimeout(timeout); try { delete window[callbackName]; } catch (e) {} try { if (script && script.parentNode) script.parentNode.removeChild(script); } catch (e) {} resolve({ success: false, message: 'Network error - saved locally', id: data.id, local: true, error: String(error) });
+          })();
+        };
+
+        document.head.appendChild(script);
+      } catch (error) {
+        resolve({ success: false, message: String(error), id: data.id, local: true });
+      }
+    });
   };
 
   // loadDataFromGoogleSheets: delegate to NVC.Api.getFromGoogleSheets multiple calls and format
@@ -138,6 +175,58 @@
       } catch (e) {
         console.warn('Projects load failed', e);
       }
+
+      // Load Technical Inspectors
+      try {
+        const inspectorRes = await NVC.Api.getFromGoogleSheets('getTechnicalInspectors');
+        if (inspectorRes && inspectorRes.success !== false) {
+          const inspectorData = Array.isArray(inspectorRes.data) ? inspectorRes.data : [];
+          const formattedInspectors = (inspectorData || []).map(item => { try { if (typeof formatTechnicalInspectorFromSheet === 'function') return formatTechnicalInspectorFromSheet(item); return item; } catch (e) { return null; } }).filter(Boolean);
+          NVC.State.set('technicalInspectors', formattedInspectors);
+        }
+      } catch (e) {
+        console.warn('Technical Inspectors load failed', e);
+      }
+      
+      // Load Employee Monitoring
+      try {
+        const empRes = await NVC.Api.getFromGoogleSheets('getEmployeeMonitoring');
+        if (empRes && empRes.success !== false) {
+          const empData = Array.isArray(empRes.data) ? empRes.data : [];
+          const formatted = (empData || []).map(item => { try { if (typeof formatEmployeeMonitoringFromSheet === 'function') return formatEmployeeMonitoringFromSheet(item); return item; } catch (e) { return null; } }).filter(Boolean);
+          if (NVC.State && typeof NVC.State.set === 'function') NVC.State.set('employeeMonitoring', formatted);
+        }
+      } catch(e) { console.warn('Employee Monitoring load failed', e); }
+
+      // Load Citizen Charter
+      try {
+        const ccRes = await NVC.Api.getFromGoogleSheets('getCitizenCharter');
+        if (ccRes && ccRes.success !== false) {
+          const ccData = Array.isArray(ccRes.data) ? ccRes.data : [];
+          const formatted = (ccData || []).map(item => { try { if (typeof formatCitizenCharterFromSheet === 'function') return formatCitizenCharterFromSheet(item); return item; } catch (e) { return null; } }).filter(Boolean);
+          if (NVC.State && typeof NVC.State.set === 'function') NVC.State.set('citizenCharters', formatted);
+        }
+      } catch(e) { console.warn('Citizen Charter load failed', e); }
+
+      // Load Investigations
+      try {
+        const invRes = await NVC.Api.getFromGoogleSheets('getInvestigations');
+        if (invRes && invRes.success !== false) {
+          const invData = Array.isArray(invRes.data) ? invRes.data : [];
+          const formatted = (invData || []).map(item => { try { if (typeof formatInvestigationFromSheet === 'function') return formatInvestigationFromSheet(item); return item; } catch (e) { return null; } }).filter(Boolean);
+          if (NVC.State && typeof NVC.State.set === 'function') NVC.State.set('investigations', formatted);
+        }
+      } catch(e) { console.warn('Investigations load failed', e); }
+
+      // Load Technical Examiners
+      try {
+        const examRes = await NVC.Api.getFromGoogleSheets('getTechnicalExaminers');
+        if (examRes && examRes.success !== false) {
+          const examData = Array.isArray(examRes.data) ? examRes.data : [];
+          const formatted = (examData || []).map(item => { try { if (typeof formatTechnicalExaminerFromSheet === 'function') return formatTechnicalExaminerFromSheet(item); return item; } catch (e) { return null; } }).filter(Boolean);
+          if (NVC.State && typeof NVC.State.set === 'function') NVC.State.set('technicalExaminers', formatted);
+        }
+      } catch(e) { console.warn('Technical Examiners load failed', e); }
 
       window._lastLoadResult = true;
       return true;

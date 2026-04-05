@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>उजुरी दर्ता फारम - राष्ट्रिय सतर्कता केन्द्र</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
   
   <link href="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/css/nepali.datepicker.v5.0.6.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   
+  <script src="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/js/nepali.datepicker.v5.0.6.min.js"></script>
   <!-- नेपाली फन्टहरू -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -216,7 +218,7 @@
   </style>
 </head>
 <body>
-<form action="https://docs.google.com/forms/d/11HrvEvu8tLUSRGzaPUhl4dLwmERuoDB69NMvqkBbqgk/formResponse" method="POST">
+<form id="complaintForm">
   <div class="container">
     <div class="header">
       <img src="emblem.png" alt="नेपाल सरकार" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Emblem_of_Nepal.svg/200px-Emblem_of_Nepal.svg.png'; this.onerror=function(){this.style.display='none'; document.getElementById('emblem-fallback').style.display='block';};">
@@ -228,6 +230,11 @@
     <div class="form-body">
      
         <div class="form-grid">
+          
+          <div class="form-group" style="display: none;">
+            <label for="reg_date"><i class="fas fa-calendar-alt"></i> मिति (नेपाली)</label>
+            <input type="text" id="reg_date" readonly style="background-color: #f8f9fa; cursor: not-allowed; color: #495057;">
+          </div>
 
           <div class="form-group">
             <label for="complainer_name"><i class="fas fa-user"></i> उजुरीकर्ताको नाम र ठेगाना</label>
@@ -235,12 +242,12 @@
           </div>
 
           <div class="form-group">
-            <label for="opponent_name"><i class="fas fa-user-slash"></i> विपक्षी</label>
-            <input type="text" id="opponent_name" name="entry.1065046570" placeholder="विपक्षी (व्यक्ति वा संस्था)">
+            <label for="opponent_name"><i class="fas fa-user-slash"></i> विपक्षी <span style="color: var(--primary);">*</span></label>
+            <input type="text" id="opponent_name" name="entry.1065046570" placeholder="विपक्षी (व्यक्ति वा संस्था)" required>
           </div>
 
           <div class="form-group" style="grid-column: 1 / -1;">
-            <label for="complaint_detail"><i class="fas fa-file-alt"></i> उजुरीको विवरण</label>
+            <label for="complaint_detail"><i class="fas fa-file-alt"></i> उजुरीको विवरण <span style="color: var(--primary);">*</span></label>
             <textarea id="complaint_detail" name="entry.1166974658" placeholder="उजुरीको मुख्य विषय लेख्नुहोस्..." required></textarea>
           </div>
 
@@ -252,11 +259,86 @@
           <button type="submit" class="submit-btn">
             <i class="fas fa-paper-plane"></i> उजुरी दर्ता गर्नुहोस्
           </button>
+          <div id="responseMessage" style="grid-column: 1 / -1; display: none; padding: 15px; border-radius: 12px; text-align: center; margin-top: 10px; font-weight: 600;"></div>
         </div>
       
     </div>
   </div>
 
  </form>
+<script>
+  // Set current Nepali Date on load
+  window.onload = function() {
+    try {
+      var today = new Date();
+      var bsObj = NepaliFunctions.AD2BS({
+        year: today.getFullYear(),
+        month: today.getMonth() + 1,
+        day: today.getDate()
+      });
+      // Format: YYYY-MM-DD
+      var bsDate = bsObj.year + '-' + String(bsObj.month).padStart(2, '0') + '-' + String(bsObj.day).padStart(2, '0');
+      document.getElementById('reg_date').value = bsDate;
+    } catch (e) {
+      console.error("Nepali Date Error:", e);
+      // Fallback to AD date if library fails
+      document.getElementById('reg_date').value = new Date().toISOString().split('T')[0];
+    }
+  };
+
+  document.getElementById('complaintForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    var btn = document.querySelector('.submit-btn');
+    var originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> पठाउँदै...';
+    
+    var msgEl = document.getElementById('responseMessage');
+    msgEl.style.display = 'none';
+
+    var params = new URLSearchParams();
+    params.append('action', 'saveOnlineComplaint');
+    params.append('apiKey', 'nvc2026secretkey');
+    params.append('complainant', document.getElementById('complainer_name').value);
+    params.append('accused', document.getElementById('opponent_name').value);
+    params.append('description', document.getElementById('complaint_detail').value);
+    params.append('remarks', document.getElementById('remarks').value);
+    params.append('date', document.getElementById('reg_date').value);
+
+    fetch('https://script.google.com/macros/s/AKfycbytfc7DhHGYCTMIDatilB3EMMVKjqBUzL3T0fyC_LuClfwtqWAJSvQDw82gRN5pgg3Uag/exec', {
+        method: 'POST',
+        body: params
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            msgEl.style.display = 'block';
+            msgEl.style.backgroundColor = '#d4edda';
+            msgEl.style.color = '#155724';
+            msgEl.style.border = '1px solid #c3e6cb';
+            msgEl.innerHTML = '<i class="fas fa-check-circle"></i> तपाईंको उजुरी सफलतापूर्वक दर्ता भयो।';
+            document.getElementById('complaintForm').reset();
+            setTimeout(function() {
+                msgEl.style.display = 'none';
+            }, 5000);
+        } else {
+            throw new Error(data.message || 'Unknown error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        msgEl.style.display = 'block';
+        msgEl.style.backgroundColor = '#f8d7da';
+        msgEl.style.color = '#721c24';
+        msgEl.style.border = '1px solid #f5c6cb';
+        msgEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> उजुरी दर्ता गर्दा समस्या आयो। कृपया पुनः प्रयास गर्नुहोस्।';
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+  });
+</script>
 </body>
 </html>

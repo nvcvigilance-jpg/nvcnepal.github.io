@@ -7,13 +7,15 @@
  */
 
 // ==================== CONFIGURATION ====================
-const SPREADSHEET_ID = '1VDsN3UOlDwjYPC3AOJvKpUu20d4I6cc_JLZYD8ogsGU';
+const SPREADSHEET_ID = '1HPHmqDyxunxscGtNIVblYWGVBgVRUivJyQkswa4brDk';
 const CONFIG = {
   SHEETS: {
     COMPLAINTS: 'Complaints',
     ONLINE_COMPLAINTS: 'OnlineComplaints',
     PROJECTS: 'Projects',
-    EMPLOYEE_MONITORING: 'EmployeeMonitoring',
+    TECHNICAL_INSPECTORS: 'TechnicalInspectors',
+    TECHNICAL_EXAMINERS: 'TechnicalExaminers',
+    EMPLOYEE_MONITORING: 'कर्मचारी_अनुगमन',
     CITIZEN_CHARTER: 'CitizenCharter',
     INVESTIGATIONS: 'Investigations',
     NOTIFICATIONS: 'Notifications',
@@ -64,7 +66,28 @@ const PARAM_MAP = {
   'investigationOpinion': 'छानविन/अन्वेषणको राय',
   'implementationDetails': 'कार्यान्वयनका लागि लेखि पठाएको व्यहोरा',
   'implementationDate': 'कार्यान्वयनका लागि लेखि पठाएको मिति',
-  'localLevel': 'स्थानीय तह/नगर'
+  'localLevel': 'स्थानीय तह/नगर',
+  // Employee Monitoring specific mappings (for कर्मचारी_अनुगमन sheet)
+  'id': 'ID',
+  'date': 'मिति',
+  'officeName': 'कार्यालय_नाम',
+  'province': 'प्रदेश',
+  'district': 'जिल्ला',
+  'localLevel': 'स्थानीय_तह',
+  'uniformViolationCount': 'पोशाक_गणना',
+  'timeViolationCount': 'समय_गणना',
+  'uniformEmployees': 'पोशाक_कर्मचारीहरु',
+  'timeEmployees': 'समय_कर्मचारीहरु',
+  'instructionDate': 'निर्देशन_मिति',
+  'remarks': 'कैफियत',
+  'createdBy': 'बनाउने',
+  'createdAt': 'समय_टिम्स्ट्याम्प',
+  // Technical Examiner specific mappings
+  'name': 'प्राविधिक परीक्षकको नाम',
+  'necRegistration': 'NEC दर्ता नं.',
+  'trainingYear': 'प्राविधिक परीक्षक तालिम लिएको वर्ष',
+  'certificateNumber': 'प्राविधिक परीक्षक प्रमाणपत्र नं.',
+  'projectsInspected': 'प्राविधिक परीक्षण गरेका आयोजना'
 };
 
 function normalizeStatusLabel(raw) {
@@ -79,6 +102,26 @@ function normalizeStatusLabel(raw) {
   if (s === 'चालु' || s === 'चालू') return 'चालु';
   if (s === 'फछ्रयौट' || s === 'फछ्र्यौट' || s === 'फछर्यौट' || s === 'फछर्यौट') return 'फछ्रयौट';
   return s;
+}
+
+/**
+ * Return internal status key ('pending'|'progress'|'resolved') from various raw inputs.
+ * Accepts English codes, Nepali labels, and common variants.
+ */
+function getStatusKey(raw) {
+  if (raw === null || raw === undefined) return 'pending';
+  var s = String(raw).trim().toLowerCase();
+  if (!s) return 'pending';
+  if (s === 'pending' || s === 'work pending' || s === 'baki') return 'pending';
+  if (s === 'progress' || s === 'in progress' || s === 'chalu' || s === 'चालु' || s === 'चालू') return 'progress';
+  if (s === 'resolved' || s === 'closed' || s === 'फछ्रयौट' || s === 'फछ्र्यौट' || s === 'फछर्यौट') return 'resolved';
+  // Also handle Nepali normalized labels returned by normalizeStatusLabel
+  var nep = normalizeStatusLabel(s || raw);
+  if (nep === 'काम बाँकी') return 'pending';
+  if (nep === 'चालु') return 'progress';
+  if (nep === 'फछ्रयौट') return 'resolved';
+  // default fallback
+  return 'pending';
 }
 
 function normalizeSourceLabel(raw) {
@@ -264,6 +307,11 @@ function extractSingleNamedValue(namedValues, key) {
 function getOnlineComplaintsHeaders() {
   return ['id','date','complainant','phone','email','province','district','localLevel','ward','ministry','accused','description',
     'status','assignedShakha','assignedShakhaCode','assignedDate','instructions','remarks','created_at','updated_at'];
+}
+
+function getEmployeeMonitoringHeaders() {
+  return ['ID','मिति','कार्यालय_नाम','प्रदेश','जिल्ला','स्थानीय_तह','पोशाक_गणना','समय_गणना',
+    'पोशाक_कर्मचारीहरु','समय_कर्मचारीहरु','निर्देशन_मिति','कैफियत','बनाउने','समय_टिम्स्ट्याम्प'];
 }
 
 function saveToExistingSheetObject(sheet, data, idColumn) {
@@ -863,6 +911,12 @@ function saveToSheet(sheetName, data, idColumn = 'उजुरी दर्त�
     console.log('Cache clear error: ' + e.toString());
   }
   
+  // Special handling for EmployeeMonitoring sheet - ensure headers exist
+  if (normalizeKey(sheetName) === normalizeKey(CONFIG.SHEETS.EMPLOYEE_MONITORING)) {
+    const empSheet = getSheet(sheetName, getEmployeeMonitoringHeaders());
+    if (!empSheet) return { success: false, message: 'EmployeeMonitoring sheet not found' };
+  }
+  
   const sheet = getSheet(sheetName);
   if (!sheet) return { success: false, message: 'Sheet not found' };
   const lastCol = sheet.getLastColumn();
@@ -1163,7 +1217,6 @@ function doGet(e) {
         response = saveToSheet(CONFIG.SHEETS.COMPLAINTS, params, 'उजुरी दर्ता नं');
         break;
 
-      case 'saveOnlineComplaint':
       case 'updateOnlineComplaint':
         // Map Google Form section fields -> sheet columns if client didn't send canonical keys
         // 'उजुरकर्ताको नाम र ठेगाना' -> complainant
@@ -1173,6 +1226,41 @@ function doGet(e) {
         {
           const mappedParams = mapOnlineComplaintParams(params);
           response = saveToSheet(CONFIG.SHEETS.ONLINE_COMPLAINTS, mappedParams, 'id');
+        }
+        break;
+
+      case 'saveOnlineComplaint':
+        {
+          var lock = LockService.getScriptLock();
+          lock.waitLock(30000);
+          try {
+            var ss = getSpreadsheet();
+            var sheet = ss.getSheetByName(CONFIG.SHEETS.ONLINE_COMPLAINTS);
+            if (!sheet) {
+              sheet = getSheet(CONFIG.SHEETS.ONLINE_COMPLAINTS, getOnlineComplaintsHeaders());
+            }
+            
+            // Prepare row data mapped specifically to columns C, K, L, R (0-indexed: C=2, K=10, L=11, R=17)
+            var rowData = new Array(20).fill(''); 
+            var id = 'OC-' + new Date().getTime();
+            
+            rowData[0] = id;                                      // Column A: id
+            rowData[1] = params.date || new Date().toISOString().slice(0,10); // Column B: date
+            rowData[2] = params.complainant || '';                // Column C: complainant
+            rowData[10] = params.accused || '';                   // Column K: accused
+            rowData[11] = params.description || '';               // Column L: description
+            rowData[12] = 'pending';                              // Column M: status
+            rowData[17] = params.remarks || '';                   // Column R: remarks
+            rowData[18] = new Date().toISOString();               // Column S: created_at
+            rowData[19] = new Date().toISOString();               // Column T: updated_at
+            
+            sheet.appendRow(rowData);
+            response = { success: true, message: 'Complaint registered successfully', id: id };
+          } catch(e) {
+            response = { success: false, message: e.toString() };
+          } finally {
+            lock.releaseLock();
+          }
         }
         break;
 
@@ -1191,14 +1279,36 @@ function doGet(e) {
         response = deleteFromSheet(CONFIG.SHEETS.PROJECTS, params.id, 'project_id');
         break;
 
+      case 'getTechnicalInspectors':
+        response = { success: true, data: getSheetData(CONFIG.SHEETS.TECHNICAL_INSPECTORS) };
+        break;
+      case 'saveTechnicalInspector':
+      case 'updateTechnicalInspector':
+        response = saveToSheet(CONFIG.SHEETS.TECHNICAL_INSPECTORS, params, 'inspector_id');
+        break;
+      case 'deleteTechnicalInspector':
+        response = deleteFromSheet(CONFIG.SHEETS.TECHNICAL_INSPECTORS, params.id, 'inspector_id');
+        break;
+
+      case 'getTechnicalExaminers':
+        response = { success: true, data: getSheetData(CONFIG.SHEETS.TECHNICAL_EXAMINERS) };
+        break;
+      case 'saveTechnicalExaminer':
+      case 'updateTechnicalExaminer':
+        response = saveToSheet(CONFIG.SHEETS.TECHNICAL_EXAMINERS, params, 'id');
+        break;
+      case 'deleteTechnicalExaminer':
+        response = deleteFromSheet(CONFIG.SHEETS.TECHNICAL_EXAMINERS, params.id, 'id');
+        break;
+
       case 'getEmployeeMonitoring':
         response = { success: true, data: getSheetData(CONFIG.SHEETS.EMPLOYEE_MONITORING) };
         break;
       case 'saveEmployeeMonitoring':
-        response = saveToSheet(CONFIG.SHEETS.EMPLOYEE_MONITORING, params, 'monitoring_id');
+        response = saveToSheet(CONFIG.SHEETS.EMPLOYEE_MONITORING, params, 'ID');
         break;
       case 'deleteEmployeeMonitoring':
-        response = deleteFromSheet(CONFIG.SHEETS.EMPLOYEE_MONITORING, params.id, 'monitoring_id');
+        response = deleteFromSheet(CONFIG.SHEETS.EMPLOYEE_MONITORING, params.id, 'ID');
         break;
 
       case 'getCitizenCharter':
@@ -1271,12 +1381,18 @@ function doGet(e) {
           default:
             reportData = allComplaints;
         }
-        const stats = {
-          total: reportData.length,
-          pending: reportData.filter(c => (String(c['स्थिति'] || c.status || '').toLowerCase() === 'pending')).length,
-          progress: reportData.filter(c => (String(c['स्थिति'] || c.status || '').toLowerCase() === 'progress')).length,
-          resolved: reportData.filter(c => (String(c['स्थिति'] || c.status || '').toLowerCase() === 'resolved')).length
-        };
+        // Normalize status values from sheet and count using internal keys
+        var stats = { total: reportData.length, pending: 0, progress: 0, resolved: 0 };
+        for (var i = 0; i < reportData.length; i++) {
+          try {
+            var row = reportData[i] || {};
+            var raw = String(row['स्थिति'] || row.status || '');
+            var key = getStatusKey(raw);
+            if (key === 'pending') stats.pending++;
+            else if (key === 'progress') stats.progress++;
+            else if (key === 'resolved') stats.resolved++;
+          } catch (e) { }
+        }
         stats.resolutionRate = stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0;
         response = { success: true, data: reportData, statistics: stats, generatedAt: new Date().toISOString() };
         break;
@@ -1412,6 +1528,8 @@ function setupSheets() {
       'status','assignedShakha','assignedShakhaCode','assignedDate','instructions','remarks','created_at','updated_at'
     ]},
     { name: CONFIG.SHEETS.PROJECTS, headers: ['project_id','project_name','organization','inspection_date','non_compliances','improvement_letter_date','improvement_info','status','remarks','shakha','created_by','created_at'] },
+    { name: CONFIG.SHEETS.TECHNICAL_INSPECTORS, headers: ['inspector_id','name','qualification','experience','specialization','contact','email','shakha','status','created_by','created_at'] },
+    { name: CONFIG.SHEETS.TECHNICAL_EXAMINERS, headers: ['id','प्राविधिक परीक्षकको नाम','NEC दर्ता नं.','प्राविधिक परीक्षक तालिम लिएको वर्ष','प्राविधिक परीक्षक प्रमाणपत्र नं.','प्राविधिक परीक्षण गरेका आयोजना','कैफियत','shakha','createdBy','createdAt'] },
     { name: CONFIG.SHEETS.EMPLOYEE_MONITORING, headers: ['monitoring_id','monitoring_date','organization','uniform_violation','time_violation','instruction_date','remarks','created_by','created_at'] },
     { name: CONFIG.SHEETS.CITIZEN_CHARTER, headers: ['charter_id','monitoring_date','organization','findings','instructions','instruction_date','remarks','created_by','created_at'] },
     { name: CONFIG.SHEETS.NOTIFICATIONS, headers: ['notification_id','title','message','time','target_shakha','type','sender','read','created_at'] },

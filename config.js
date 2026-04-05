@@ -5,7 +5,7 @@
 
   // Google Sheets configuration (moved from script.js)
   NVC.Config.GOOGLE_SHEETS_CONFIG = NVC.Config.GOOGLE_SHEETS_CONFIG || {
-    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw2G8-4dyVcG7HJ32J4v1MEYXeXRwo-wLWaBmBfX6OxXSurUxuZpWxGGgkS1Go4uJTJ5w/exec',
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbytfc7DhHGYCTMIDatilB3EMMVKjqBUzL3T0fyC_LuClfwtqWAJSvQDw82gRN5pgg3Uag/exec',
     API_KEY: 'nvc2026secretkey',
     ENABLED: true,
     USE_CORS_PROXY: false,

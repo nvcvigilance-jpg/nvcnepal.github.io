@@ -398,4 +398,88 @@
     } catch (e) { console.error('NVC.UI.cancelDashboardEdit failed', e); }
   };
 
+  // Technical Inspectors View
+  NVC.UI.showTechnicalInspectorsView = function() {
+    try {
+      const stateObj = window.state || (window.NVC && NVC.State && NVC.State.state) || {};
+      const inspectors = stateObj.technicalInspectors || [];
+      
+      // Create HTML for the technical inspectors table
+      let html = `
+        <div class="content-header">
+          <h2>प्राविधिक परीक्षक सूची</h2>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="showAddTechnicalInspectorForm()">
+              <i class="fas fa-plus"></i> नयाँ प्राविधिक परीक्षक थप्नुहोस्
+            </button>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>क्र.सं.</th>
+                <th>प्राविधिक परीक्षकको नाम</th>
+                <th>NEC दर्ता नं.</th>
+                <th>प्राविधिक परीक्षक तालिम लिएको वर्ष</th>
+                <th>प्राविधिक परीक्षक प्रमाणपत्र नं</th>
+                <th>प्राविधिक परीक्षण गरेका आयोजना</th>
+                <th>कैफियत</th>
+                <th>कार्य</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      if (inspectors.length === 0) {
+        html += `
+          <tr>
+            <td colspan="8" class="text-center">कुनै प्राविधिक परीक्षकहरू फेला परेनन्</td>
+          </tr>
+        `;
+      } else {
+        inspectors.forEach((inspector, index) => {
+          html += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${inspector.name || ''}</td>
+              <td>${inspector.necRegistrationNo || ''}</td>
+              <td>${inspector.trainingYear || ''}</td>
+              <td>${inspector.certificateNo || ''}</td>
+              <td>${inspector.inspectedProjects || ''}</td>
+              <td>${inspector.remarks || ''}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editTechnicalInspector('${inspector.id}')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteTechnicalInspector('${inspector.id}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+      
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      // Set the content
+      const contentArea = document.getElementById('contentArea');
+      if (contentArea) {
+        contentArea.innerHTML = html;
+      }
+      
+    } catch (e) {
+      console.error('NVC.UI.showTechnicalInspectorsView failed', e);
+      if (typeof NVC.UI.showToast === 'function') {
+        NVC.UI.showToast('प्राविधिक परीक्षकहरू लोड गर्न सकिएन', 'error');
+      }
+    }
+  };
+
 })();

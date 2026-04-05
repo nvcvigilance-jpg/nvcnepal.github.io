@@ -7,6 +7,7 @@
   NVC.State.state = NVC.State.state || {
     complaints: [],
     projects: [],
+    technicalInspectors: [],
     user: null,
     chatContext: null,
     ui: {}
