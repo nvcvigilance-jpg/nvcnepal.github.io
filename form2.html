@@ -96,7 +96,7 @@
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
+      gap: 22px; /* reduced 10% from 24px */
     }
 
     .form-group {
@@ -151,16 +151,16 @@
 
     .submit-btn {
       grid-column: 1 / -1;
-      padding: 18px 40px;
+      padding: 11px 24px; /* padding reduced ~40% */
       background: linear-gradient(to right, var(--primary), #d6334c);
       color: white;
       border: none;
       border-radius: 16px;
-      font-size: 1.25rem;
+      font-size: 1rem; /* text size reduced 20% */
       font-weight: bold;
       cursor: pointer;
       transition: all 0.4s ease;
-      margin-top: 20px;
+      margin-top: 12px; /* gap between remarks and submit reduced 40% */
       box-shadow: 0 8px 25px rgba(196, 30, 58, 0.3);
     }
 
@@ -186,7 +186,7 @@
       }
       .form-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 18px; /* reduced 10% from 20px */
       }
       .header {
         padding: 25px 15px;
@@ -211,8 +211,8 @@
         font-size: 1rem;
       }
       .submit-btn {
-        font-size: 1.15rem;
-        padding: 16px 30px;
+        font-size: 0.92rem; /* reduced ~20% from 1.15rem */
+        padding: 10px 18px; /* reduced ~40% from 16px 30px */
       }
     }
   </style>
@@ -292,7 +292,7 @@
     var btn = document.querySelector('.submit-btn');
     var originalHTML = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> पठाउँदै...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> उजुरी पठाईंदै...';
     
     var msgEl = document.getElementById('responseMessage');
     msgEl.style.display = 'none';
@@ -317,7 +317,7 @@
             msgEl.style.backgroundColor = '#d4edda';
             msgEl.style.color = '#155724';
             msgEl.style.border = '1px solid #c3e6cb';
-            msgEl.innerHTML = '<i class="fas fa-check-circle"></i> तपाईंको उजुरी सफलतापूर्वक दर्ता भयो।';
+            msgEl.innerHTML = '<i class="fas fa-check-circle"></i> तपाईंको उजुरी सफलतापूर्वक दर्ता भयो। थप जानकारीका लागि ०१-४२००३४५ मा सम्पर्क गर्नुहोस्।';
             document.getElementById('complaintForm').reset();
             setTimeout(function() {
                 msgEl.style.display = 'none';
